@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "394717269839",
+    "project_id": "car-activity",
+    "storage_bucket": "car-activity.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:394717269839:android:d4fc23e7c6f0bd608bff3a",
+        "android_client_info": {
+          "package_name": "com.caractivity"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "394717269839-pc9mblfl39s3hr01bk8vlt9n4fjh1n8j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7o_NoyvHHNk44BSfDREhN0g1Ai_Iw-k8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "394717269839-pc9mblfl39s3hr01bk8vlt9n4fjh1n8j.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "394717269839-tg3ka380aka3b690b6mhd2d8c50sitoh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.alex.caractivity"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
