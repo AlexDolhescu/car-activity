@@ -61,21 +61,25 @@ const toggleTheme = () => {
         <Drawer.Section style={styles.drawerSection}>
           <DrawerItem
             icon={({color, size}) => (
-              <Icon name="home-outline" color={color} size={size} />
-            )}
+                             <Icon
+                             name="account-off"
+                             color={color}
+                             size={size}
+                             />
+                         )}
             label="Home"
             onPress={() => {props.navigation.navigate('Home')}}
           />
           <DrawerItem
             icon={({color, size}) => (
-              <Icon name="profile-outline" color={color} size={size} />
+              <Icon name="account-off" color={color} size={size} />
             )}
             label="Details"
             onPress={() => {props.navigation.navigate('DetailsScreen')}}
           />
           <DrawerItem
             icon={({color, size}) => (
-              <Icon name="profile-outline" color={color} size={size} />
+              <Icon name="account-off" color={color} size={size} />
             )}
             label="Support"
             onPress={() => {props.navigation.navigate('Support')}}

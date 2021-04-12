@@ -108,6 +108,8 @@ fbLogin: async () => {
   }
 },
 register: async (email, password) => {
+  console.log(email);
+    console.log(password);
   try {
     await auth().createUserWithEmailAndPassword(email, password);
   } catch (e) {

@@ -6,12 +6,14 @@ import { createMaterialBottomTabNavigator } from '@react-navigation/material-bot
 
 
 import HomeScreen from './HomeScreen';
-import DetailsScreen from './DetailsScreen';
+import SearchScreen from './SearchScreen';
+import ActivityScreen from './ActivityScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 
 const HomeStack = createStackNavigator();
-const DetailsStack = createStackNavigator();
+const SearchStack = createStackNavigator();
+const ActivityStack = createStackNavigator();
 
 const MainTabScreen = () => (
   <Tab.Navigator
@@ -24,30 +26,49 @@ const MainTabScreen = () => (
        style={{ backgroundColor: 'tomato' }}
        options={{
          tabBarLabel: 'Home',
+          tabBarColor: '#000000',
          tabBarIcon: ({ color }) => (
            <MaterialCommunityIcons name="home" color={color} size={26} />
          ),
        }}
      />
      <Tab.Screen
-       name="DetailsScreen"
-       component={DetailsStackScreen}
+       name="Search"
+       component={SearchStackScreen}
+       title='Search'
        options={{
-         tabBarLabel: 'Updates',
-         tabBarColor: '#d02860',
+         tabBarLabel: 'Search',
+         tabBarColor: '#000000',
          tabBarIcon: ({ color }) => (
-           <MaterialCommunityIcons name="bell" color={color} size={26} />
+           <MaterialCommunityIcons name="search-web" color={color} size={26} />
          ),
        }}
      />
      <Tab.Screen
-       name="Profile"
-       component={DetailsStackScreen}
+       name="CarActivity"
+       component={ActivityStackScreen}
        options={{
-         tabBarLabel: 'Profile',
-         tabBarColor: '#009387',
+         tabBarLabel: 'Car activity',
+         tabBarColor: '#000000',
          tabBarIcon: ({ color }) => (
-           <MaterialCommunityIcons name="account" color={color} size={26} />
+           <MaterialCommunityIcons name="car" color={color} size={26} />
+         ),
+       }}
+     />
+     <Tab.Screen
+       name="Settings"
+        component={HomeStackScreen}
+        listeners={({ navigation }) => ({
+          tabPress: e => {
+            e.preventDefault();
+            navigation.openDrawer();
+          }
+        })}
+       options={{
+         tabBarLabel: 'Settings',
+         tabBarColor: '#000000',
+         tabBarIcon: ({ color }) => (
+           <MaterialCommunityIcons name="account-arrow-left" color={color} size={26} />
          ),
        }}
      />
@@ -59,7 +80,7 @@ export default MainTabScreen;
 const HomeStackScreen = ({navigation}) => (
   <HomeStack.Navigator screenOptions={{
     headerStyle: {
-      backgroundColor: '#009387'
+      backgroundColor: '#000000'
     },
     headerTintColor: '#fff',
     headerTitleStyle: {
@@ -67,33 +88,36 @@ const HomeStackScreen = ({navigation}) => (
     }
   }}>
       <HomeStack.Screen name="Home"component={HomeScreen} options = {{
-        title: 'Acasa',
-        headerLeft: () => (
-          <Icon.Button name="menu" size={25} backgroundColor="#009387" onPress={() =>
-            navigation.openDrawer()}
-        ></Icon.Button>
-      )
-      }} />
+        title: 'Acasa'}} />
     </HomeStack.Navigator>
 );
 
-const DetailsStackScreen = ({navigation}) => (
-  <DetailsStack.Navigator screenOptions={{
+const SearchStackScreen = ({navigation}) => (
+  <SearchStack.Navigator screenOptions={{
     headerStyle: {
-      backgroundColor: '#009387'
+      backgroundColor: '#000000'
     },
     headerTintColor: '#fff',
     headerTitleStyle: {
       fontWeight: 'bold'
     }
   }}>
-      <DetailsStack.Screen name="DetailsScreen"component={DetailsScreen} options = {{
-        title: 'DetailsScreen',
-        headerLeft: () => (
-          <Icon.Button name="menu" size={25} backgroundColor="#009387" onPress={() =>
-            navigation.openDrawer()}
-        ></Icon.Button>
-      )
-      }} />
-    </DetailsStack.Navigator>
+      <SearchStack.Screen name="SearchScreen"component={SearchScreen} options = {{
+        title: 'SearchScreen'}} />
+    </SearchStack.Navigator>
+);
+
+const ActivityStackScreen = ({navigation}) => (
+  <ActivityStack.Navigator screenOptions={{
+    headerStyle: {
+      backgroundColor: '#000000'
+    },
+    headerTintColor: '#fff',
+    headerTitleStyle: {
+      fontWeight: 'bold'
+    }
+  }}>
+    <ActivityStack.Screen name="ActivityScreen"component={ActivityScreen} options = {{
+        title: 'CarScreen'}} />
+    </ActivityStack.Navigator>
 );

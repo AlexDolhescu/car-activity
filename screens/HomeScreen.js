@@ -4,6 +4,7 @@ import {
   View,
   Button
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const HomeScreen= ({navigation}) => {
   return (

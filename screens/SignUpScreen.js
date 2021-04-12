@@ -1,4 +1,4 @@
-import React, {userContext, useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {
     View,
     Text,
@@ -32,7 +32,7 @@ const SignInScreen = ({navigation}) => {
       isValidConfirmPassword: true,
   });
 
-const {register} = userContext(AuthContext);
+const {register} = useContext(AuthContext);
 
 const textInputChange = (val) => {
     if( val.trim().length >= 4 ) {
@@ -212,23 +212,8 @@ const updateSecureConfirmTextEntry = () => {
 
                   <FormButton
                       buttonTitle="Sign Up"
-                      onPress={() => register(email, password)}
+                      onPress={() => register(data.username, data.password)}
                     />
-                            <SocialButton
-                            buttonTitle="Sign Up with Facebook"
-                            btnType="facebook"
-                            color="#4867aa"
-                            backgroundColor="#e6eaf4"
-                            onPress={() => {}}
-                            />
-
-                            <SocialButton
-                            buttonTitle="Sign Up with Google"
-                            btnType="google"
-                            color="#de4d41"
-                            backgroundColor="#f5e7ea"
-                            onPress={() => {}}
-                            />
 
                             <TouchableOpacity
                                 onPress={() => navigation.navigate('SignInScreen')}

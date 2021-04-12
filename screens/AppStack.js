@@ -24,7 +24,7 @@ const Drawer = createDrawerNavigator();
 
 const AppStack = ({navigation}) => (
 
-<Drawer.Navigator drawerContent={props => <DrawerContent { ... props} />}>
+<Drawer.Navigator drawerPosition="right" drawerContent={props => <DrawerContent { ... props} />}>
        <Drawer.Screen name="HomeDrawer" component={MainTabScreen} />
        <Drawer.Screen name="Support" component={SupportScreen} />
      </Drawer.Navigator>
