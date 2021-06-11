@@ -1,6 +1,6 @@
-import React, {useContext, useState} from 'react';
-import {View, StyleSheet} from 'react-native';
-import {DrawerContentScrollView, DrawerItem} from '@react-navigation/drawer';
+import React, { useContext, useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import {
   Avatar,
   Title,
@@ -10,83 +10,79 @@ import {
   Text,
   TouchableRipple,
   Switch,
+  Divider,
 } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Icon } from 'react-native-elements'
 
-import {AuthContext} from '../navigation/AuthProvider';
+import { AuthContext } from '../navigation/AuthProvider';
 
 export function DrawerContent(props) {
 
-const [isDarkTheme, setIsDarkTheme] = React.useState(false);
-const {logout} = useContext(AuthContext);
+  const [isDarkTheme, setIsDarkTheme] = React.useState(false);
+  const { logout } = useContext(AuthContext);
 
-const toggleTheme = () => {
-  setIsDarkTheme(!isDarkTheme);
-}
+  const toggleTheme = () => {
+    setIsDarkTheme(!isDarkTheme);
+  }
 
   return (
-    <View style={{flex: 1}}>
+    <View style={{ flex: 1 }}>
       <DrawerContentScrollView {...props}>
         <View style={styles.drawerContent}>
           <View style={styles.userInfoSection}>
-            <View style={{flexDirection: 'row', marginTop: 15}}>
-              <Avatar.Image
-                source={{
-                  uri: 'https://api.adorable.io/avatars/50/abott@adorable.png',
-                }}
+            <View style={{ flexDirection: 'row', marginTop: 15 }}>
+              <Avatar.Text
+                label="AD"
+                color="white"
                 size={50}
+                style={{ backgroundColor: "black" }}
               />
-              <View style={{marginLeft: 15, flexDirection: 'column'}}>
-                <Title style={styles.title}>John Doe</Title>
-                <Caption style={styles.caption}>@j_doe</Caption>
+              <View style={{ marginLeft: 15, flexDirection: 'column' }}>
+                <Title style={styles.title}>Alex Dolhescu</Title>
+                <Caption style={styles.caption}>alex.dolhescu@rpss.ro</Caption>
               </View>
             </View>
-
             <View style={styles.row}>
               <View style={styles.section}>
-                <Paragraph style={[styles.paragraph, styles.caption]}>
-                  80
-                </Paragraph>
-                <Caption style={styles.caption}>Following</Caption>
-              </View>
-              <View style={styles.section}>
-                <Paragraph style={[styles.paragraph, styles.caption]}>
-                  100
-                </Paragraph>
-                <Caption style={styles.caption}>Followers</Caption>
+                <Caption style={styles.caption}>Editează profilul</Caption>
               </View>
             </View>
           </View>
+          <Divider />
         </View>
+        <Divider style={{ marginTop: 10, marginBottom: -10 }} />
         <Drawer.Section style={styles.drawerSection}>
           <DrawerItem
-            icon={({color, size}) => (
-                             <Icon
-                             name="account-off"
-                             color={color}
-                             size={size}
-                             />
-                         )}
-            label="Home"
-            onPress={() => {props.navigation.navigate('Home')}}
-          />
-          <DrawerItem
-            icon={({color, size}) => (
-              <Icon name="account-off" color={color} size={size} />
-            )}
-            label="Details"
-            onPress={() => {props.navigation.navigate('DetailsScreen')}}
-          />
-          <DrawerItem
-            icon={({color, size}) => (
-              <Icon name="account-off" color={color} size={size} />
+            icon={({ color, size }) => (
+              <Icon name="add-circle-outline" color={color} type='Ionicons' size={size} />
             )}
             label="Support"
-            onPress={() => {props.navigation.navigate('Support')}}
+            onPress={() => { props.navigation.navigate('SupportScreen') }}
+          />
+          <DrawerItem
+            icon={({ color, size }) => (
+              <Icon name="add-circle-outline" color={color} type='Ionicons' size={size} />
+            )}
+            label="ManageBrand"
+            onPress={() => { props.navigation.navigate('ManageBrandScreen') }}
+          />
+          <DrawerItem
+            icon={({ color, size }) => (
+              <Icon name="add-circle-outline" color={color} type='Ionicons' size={size} />
+            )}
+            label="ManageModel"
+            onPress={() => { props.navigation.navigate('ManageModelScreen') }}
+          />
+          <DrawerItem
+            icon={({ color, size }) => (
+              <Icon name="add-circle-outline" color={color} type='Ionicons' size={size} />
+            )}
+            label="ManageCategory"
+            onPress={() => { props.navigation.navigate('ManageCategoryScreen') }}
           />
         </Drawer.Section>
         <Drawer.Section title="Preferences">
-          <TouchableRipple  onPress={() => {toggleTheme()}}>
+          <TouchableRipple onPress={() => { toggleTheme() }}>
             <View style={styles.preference}>
               <Text>Dark Theme</Text>
               <View pointerEvents="none">
@@ -98,7 +94,7 @@ const toggleTheme = () => {
       </DrawerContentScrollView>
       <Drawer.Section style={styles.bottomDrawerSection}>
         <DrawerItem
-          icon={({color, size}) => (
+          icon={({ color, size }) => (
             <Icon name="exit-to-app" color={color} size={size} />
           )}
           label="Sign Out"

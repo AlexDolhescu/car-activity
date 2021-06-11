@@ -12,6 +12,10 @@ target 'CarActivity' do
     :hermes_enabled => false
   )
 
+  pod 'react-native-safe-area-context', :path => '../node_modules/react-native-safe-area-context'
+
+  pod 'RNDateTimePicker', :path => '../node_modules/@react-native-community/datetimepicker'
+
   target 'CarActivityTests' do
     inherit! :complete
     # Pods for testing
