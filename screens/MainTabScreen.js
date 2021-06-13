@@ -10,6 +10,8 @@ import SearchScreen from './SearchScreen';
 import ActivityScreen from './ActivityScreen';
 import ManageActivityScreen from './ManageActivityScreen';
 import ManageCarScreen from './ManageCarScreen';
+import CarActionsScreen from './CarActionsScreen';
+import CarGalleryScreen from './CarGalleryScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -94,6 +96,12 @@ const HomeStackScreen = ({ navigation }) => (
     }} />
     <HomeStack.Screen name="ManageCarScreen" component={ManageCarScreen} options={{
       title: 'Gestionează masină'
+    }} />
+    <HomeStack.Screen name="CarActionsScreen" component={CarActionsScreen} options={{
+      title: 'Acțiuni masină'
+    }} />
+        <HomeStack.Screen name="CarGalleryScreen" component={CarGalleryScreen} options={{
+      title: 'Galerie masină'
     }} />
   </HomeStack.Navigator>
 );
