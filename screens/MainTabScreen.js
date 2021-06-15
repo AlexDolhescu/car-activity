@@ -4,7 +4,6 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
 
-
 import HomeScreen from './HomeScreen';
 import SearchScreen from './SearchScreen';
 import ActivityScreen from './ActivityScreen';
@@ -12,6 +11,10 @@ import ManageActivityScreen from './ManageActivityScreen';
 import ManageCarScreen from './ManageCarScreen';
 import CarActionsScreen from './CarActionsScreen';
 import CarGalleryScreen from './CarGalleryScreen';
+import CarUsersScreen from './CarUsersScreen';
+import ServiceIntervalScreen from './ServiceIntervalScreen';
+import CarAlertsScreen from './CarAlertsScreen';
+import MileageUpdateScreen from './MileageUpdateScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -100,8 +103,20 @@ const HomeStackScreen = ({ navigation }) => (
     <HomeStack.Screen name="CarActionsScreen" component={CarActionsScreen} options={{
       title: 'Acțiuni masină'
     }} />
-        <HomeStack.Screen name="CarGalleryScreen" component={CarGalleryScreen} options={{
+    <HomeStack.Screen name="CarGalleryScreen" component={CarGalleryScreen} options={{
       title: 'Galerie masină'
+    }} />
+    <HomeStack.Screen name="CarUsersScreen" component={CarUsersScreen} options={{
+      title: 'Utilizatori masină'
+    }} />
+        <HomeStack.Screen name="ServiceIntervalScreen" component={ServiceIntervalScreen} options={{
+      title: 'Interval service'
+    }} />
+            <HomeStack.Screen name="CarAlertsScreen" component={CarAlertsScreen} options={{
+      title: 'Alerte mașină'
+    }} />
+                <HomeStack.Screen name="MileageUpdateScreen" component={MileageUpdateScreen} options={{
+      title: 'Actualizează kilometraj'
     }} />
   </HomeStack.Navigator>
 );

@@ -25,6 +25,7 @@
     "@react-navigation/stack": "^5.14.3",
     "feather-icons-react": "^0.4.3",
     "link": "^0.1.5",
+    "moment": "^2.29.1",
     "react": "17.0.1",
     "react-alert-confirm": "^3.2.5",
     "react-confirm-alert": "^2.7.0",

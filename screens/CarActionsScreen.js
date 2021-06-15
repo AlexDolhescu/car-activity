@@ -33,19 +33,19 @@ const CarActionsScreen = ({ route, navigation }) => {
         <ScrollView>
             <View style={styles.container}>
                 <Card>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate("MileageUpdateScreen", {carId: carId})} >
                     <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start", width: windowWidth * 85 / 100 }}>
                         <View style={{
                             height: 55, width: 55, alignItems: "center", justifyContent: "center", marginRight: 10,
                         }}>
                             <Icon
                                 size={35}
-                                name='edit'
+                                name='settings'
                                 type='Ionicons'
                                 color='black'
                                 onPress={choosePhotoFromLibrary} />
                         </View>
-                        <Text style={{  fontSize: 20,}}>Editează informatiile</Text>
+                        <Text style={{  fontSize: 20,}}>Actualizează kilometraj</Text>
                     </View>
                     </TouchableOpacity>
                 </Card>
@@ -66,7 +66,7 @@ const CarActionsScreen = ({ route, navigation }) => {
                     </TouchableOpacity>
                 </Card>
                 <Card>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate("CarUsersScreen", {carId: carId})} >
                     <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start", width: windowWidth * 85 / 100 }}>
                         <View style={{
                             height: 55, width: 55, alignItems: "center", justifyContent: "center", marginRight: 10,
@@ -75,15 +75,14 @@ const CarActionsScreen = ({ route, navigation }) => {
                                 size={35}
                                 name='person'
                                 type='Ionicons'
-                                color='black'
-                                onPress={choosePhotoFromLibrary} />
+                                color='black' />
                         </View>
                         <Text  style={{  fontSize: 20,}}>Gestionare utilizatori</Text>
                     </View>
                     </TouchableOpacity>
                 </Card>
                 <Card>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate("ServiceIntervalScreen", {carId: carId})} >
                     <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start", width: windowWidth * 85 / 100 }}>
                         <View style={{
                             height: 55, width: 55, alignItems: "center", justifyContent: "center", marginRight: 10,
@@ -92,15 +91,14 @@ const CarActionsScreen = ({ route, navigation }) => {
                                 size={35}
                                 name='build'
                                 type='Ionicons'
-                                color='black'
-                                onPress={choosePhotoFromLibrary} />
+                                color='black' />
                         </View>
                         <Text  style={{  fontSize: 20,}}>Resetare perioadă service</Text>
                     </View>
                     </TouchableOpacity>
                 </Card>
                 <Card>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate("CarAlertsScreen", {carId: carId})} >
                     <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start", width: windowWidth * 85 / 100 }}>
                         <View style={{
                             height: 55, width: 55, alignItems: "center", justifyContent: "center", marginRight: 10,
@@ -109,8 +107,7 @@ const CarActionsScreen = ({ route, navigation }) => {
                                 size={35}
                                 name='notifications'
                                 type='Ionicons'
-                                color='black'
-                                onPress={choosePhotoFromLibrary} />
+                                color='black'/>
                         </View>
                         <Text  style={{  fontSize: 20,}}>Gestionează alerte</Text>
                     </View>
