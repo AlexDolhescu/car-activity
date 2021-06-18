@@ -189,7 +189,7 @@ const ManageCarScreen = ({ route, navigation }) => {
         navigation.navigate("HomeScreen");
       })
       .catch((error) => {
-        console.log('Something went wrong with added car to firestore.', error);
+        console.log('Something went wrong with update car to firestore.', error);
       });
   }
 

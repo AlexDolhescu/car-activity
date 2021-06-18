@@ -17,6 +17,7 @@ import ServiceIntervalScreen from './ServiceIntervalScreen';
 import CarAlertsScreen from './CarAlertsScreen';
 import MileageUpdateScreen from './MileageUpdateScreen';
 import PetrolScreen from './PetrolScreen';
+import ManagePetrolScreen from './ManagePetrolScreen';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -78,7 +79,7 @@ const MainTabScreen = () => (
               <Text>Activități</Text>
             </View>
             :
-            <View style={{ justifyContent: "center", alignItems: "center", width: 60}}>
+            <View style={{ justifyContent: "center", alignItems: "center", width: 60 }}>
               <Icon name="layers-outline" size={30} color={color} />
             </View>
         )
@@ -223,6 +224,9 @@ const PetrolStackScreen = ({ navigation }) => (
           <Icon size={25} name='menu' color="white" onPress={() => navigation.openDrawer()} style={{ marginRight: 5 }} />
         </TouchableOpacity>
       )
+    }} />
+    <ActivityStack.Screen name="ManagePetrolScreen" component={ManagePetrolScreen} options={{
+      title: 'Gestionează alimentare'
     }} />
   </PetrolStack.Navigator>
 );

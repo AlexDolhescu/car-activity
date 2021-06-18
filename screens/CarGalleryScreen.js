@@ -108,10 +108,18 @@ const CarGalleryScreen = ({ route, navigation }) => {
         );
     };
 
-    const deletePhoto = (image) => {
+    const deletePhoto = async (image) => {
         let existingImages = [...photos];
         existingImages = existingImages.filter(img => img.uri != image.uri)
-        // delete from storage
+        let photoRef = await storage().refFromURL(image.uri);
+        photoRef.delete().then(function () {
+            Alert.alert(
+                'Succes',
+                'Poza a fost ștearsă cu succes!',
+            );
+        }).catch(function (error) {
+            console.log(error);
+        });
         setPhotos({ photos });
         setRefresh(!refresh);
     };
@@ -152,8 +160,8 @@ const CarGalleryScreen = ({ route, navigation }) => {
                         <Text h5 style={{ color: 'gray', textAlign: "center" }}>- nu sunt poze încarcate -</Text>
                     </View>
                 }
-                <Button style={{ width: 200, marginBottom: 10, marginTop: 10, marginRight: '2%' }} mode="outlined" color="black"
-                    onPress={choosePhotoFromLibrary}
+                <Button style={{ width: 300, marginBottom: 20, marginTop: 20, marginRight: '2%', borderRadius: 50 }} mode="contained" color="black"
+                    onPress={() => choosePhotoFromLibrary()}
                 >Adaugă o poze</Button>
             </View>
         </ScrollView>

@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { View, Button, StyleSheet, Image, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Button, StyleSheet, Image, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
@@ -9,16 +9,31 @@ import TouchableScale from 'react-native-touchable-scale';
 import ActionButton from 'react-native-action-button';
 import Moment from 'moment'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { windowWidth, windowHeight } from "../utils/Dimensions";
 
 const ActivityScreen = ({ navigation }) => {
 
   const { user, logout } = useContext(AuthContext);
   const [carInformations, setCarInformations] = useState({});
   const [activities, setActivities] = useState([]);
+  const [allActivities, setAllActivities] = useState([]);
+  const [showFilter, setShowFilter] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
+  const [showTimePeriod, setShowTimePeriod] = useState(false);
+  const [category, setCategory] = useState(null);
+  const [timePeriod, setTimePeriod] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [refresh, setRefresh] = useState(false);
+  const [timePeriodValues] = useState([
+    { id: 1, name: "Ultima lună" },
+    { id: 2, name: "Ultimul an" },
+  ])
+
 
   React.useEffect(() => {
     void async function fetchData() {
-      loadActivities()
+      loadCategories();
+      loadActivities();
     }();
   }, []);
 
@@ -42,6 +57,19 @@ const ActivityScreen = ({ navigation }) => {
       })
       .catch((error) => {
         console.log('Something went wrong with find carUser to firestore.', error);
+      });
+  };
+
+  const loadCategories = () => {
+    firestore()
+      .collection('category')
+      .get()
+      .then(async (querySnapshot) => {
+        let categoties = querySnapshot.docs.map(doc => { return { data: doc.data(), id: doc.id } })
+        setCategories(categoties);
+      })
+      .catch((error) => {
+        console.log('Something went wrong with find categoties to firestore.', error);
       });
   };
 
@@ -100,11 +128,13 @@ const ActivityScreen = ({ navigation }) => {
           let activities = [];
           let chartData = querySnapshot.docs.map(doc => { return { data: doc.data(), id: doc.id } })
           for (const activity of chartData) {
+            let activityToAdd = {};
             let categoryImage = await getCategoryImageById(activity.data.categoryId);
-            activity = [...activity, { categoryImage: categoryImage }]
-            activities.push(activity);
+            activityToAdd = { ...activity.data, id: activity.id, categoryImage: categoryImage };
+            activities.push(activityToAdd);
           };
           setActivities(activities);
+          setAllActivities(activities);
           resolve(activities);
         })
         .catch((error) => {
@@ -119,116 +149,14 @@ const ActivityScreen = ({ navigation }) => {
         .collection('category')
         .doc(categoryId)
         .get()
-        .then((car) => {
-          resolve(car.data().image);
+        .then((category) => {
+          resolve(category.data().image);
         })
         .catch((error) => {
-          console.log('Something went wrong with find car to firestore.', error);
+          console.log('Something went wrong with find category to firestore.', error);
         });
     });
   };
-
-  const choosePhotoFromLibrary = () => {
-
-
-    ImagePicker.openPicker({
-      width: 1200,
-      height: 780,
-      cropping: true,
-    }).then((image) => {
-      console.log(image);
-      const imageUri = Platform.OS === 'ios' ? image.sourceURL : image.path;
-      setImage(imageUri);
-    });
-  };
-
-  const submitPost = async () => {
-    const imageUrl = await uploadImage();
-    console.log('Image Url: ', imageUrl);
-    console.log('Post: ', post);
-
-    firestore()
-      .collection('activity')
-      .add({
-        userId: user.uid,
-        post: "test",
-        postImg: imageUrl,
-        postTime: firestore.Timestamp.fromDate(new Date())
-      })
-      .then(() => {
-        console.log('Post Added!');
-        Alert.alert(
-          'Post published!',
-          'Your post has been published Successfully!',
-        );
-        setPost(null);
-      })
-      .catch((error) => {
-        console.log('Something went wrong with added post to firestore.', error);
-      });
-  }
-
-  const uploadImage = async () => {
-    if (image == null) {
-      return null;
-    }
-    const uploadUri = image;
-    let filename = uploadUri.substring(uploadUri.lastIndexOf('/') + 1);
-
-    // Add timestamp to File Name
-    const extension = filename.split('.').pop();
-    const name = filename.split('.').slice(0, -1).join('.');
-    filename = name + Date.now() + '.' + extension;
-
-    setUploading(true);
-    setTransferred(0);
-
-    const storageRef = storage().ref(`photos/${filename}`);
-    const task = storageRef.putFile(uploadUri);
-
-    // Set transferred state
-    task.on('state_changed', (taskSnapshot) => {
-      console.log(
-        `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
-      );
-
-      setTransferred(
-        Math.round(taskSnapshot.bytesTransferred / taskSnapshot.totalBytes) *
-        100,
-      );
-
-    });
-    try {
-      await task;
-
-      const url = await storageRef.getDownloadURL();
-
-      setUploading(false);
-      setImage(null);
-
-      Alert.alert(
-        'Image uploaded!',
-        'Your image has been uploaded to the Firebase Cloud Storage Successfully!',
-      );
-      return url;
-
-    } catch (e) {
-      console.log(e);
-      return null;
-    }
-  }
-
-  const list = [
-    {
-      name: 'Rezivie',
-      subtitle: '-'
-    },
-    {
-      name: 'Service spate',
-      subtitle: 'Schimbat amortizoare, flanse, etc',
-      avatar_url: 'https://s3.amazonaws.com/uifaces/faces/twitter/adhamdannaway/128.jpg'
-    },
-  ];
 
   const formatDate = (date) => {
     if (date == null) {
@@ -237,15 +165,55 @@ const ActivityScreen = ({ navigation }) => {
     return Moment(date).format("DD/MM/YYYY");
   }
 
-  const filter = () => {
-
+  const selectCategory = (item) => {
+    setCategory({ ...item });
+    let filteredActivities = [...activities];
+    filteredActivities = filteredActivities.filter(activity => activity.categoryId == item.id);
+    console.log(filteredActivities);
+    setActivities(filteredActivities);
+    setShowCategories(!showCategories);
+    setShowFilter(!showFilter);
+    setRefresh(!refresh);
   }
 
+  const deleteFilters = () => {
+    setCategory(null);
+    setTimePeriod(null);
+    setActivities(allActivities);
+    setShowFilter(!showFilter);
+    setRefresh(!refresh);
+  }
+
+  const selectTimePeriod = (item) => {
+    setTimePeriod({ ...item });
+    let filteredActivities = [...activities];
+    if (item.id == 1) {
+      filteredActivities = filteredActivities.filter(activity => Moment(activity.date) >= Moment().subtract(1, 'months'));
+    } else if (item.id == 2) {
+      filteredActivities = filteredActivities.filter(activity => Moment(activity.date) >= Moment().subtract(1, 'years'));
+    }
+    setActivities(filteredActivities);
+    setShowFilter(!showFilter);
+    setShowTimePeriod(!showTimePeriod);
+    setRefresh(!refresh);
+  }
+
+  const calculateCosts = () => {
+    let cost = 0;
+    activities.forEach(activity => {
+      if (activity.cost != null || activity.cost != undefined) {
+        cost += Number(activity.cost);
+      }
+    });
+    return cost;
+  }
+
+
   return (
-    <View style={styles.container}>
+    <View style={styles.container} refresh={refresh}>
       <View style={{ flex: 1, width: '100%' }}>
         {carInformations.brand != undefined ? // verificare degeaba acum
-          <View style={{ flexDirection: "row", alignItems: "center", alignContent:"center", justifyContent: "space-between", }}>
+          <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", justifyContent: "space-between", }}>
             <View>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginTop: 10, marginLeft: 5 }}>
                 <Image source={{ uri: carInformations.model.image != undefined ? carInformations.model.image : carInformations.brand.image }}
@@ -259,30 +227,135 @@ const ActivityScreen = ({ navigation }) => {
                 }}>{carInformations.car.data().licencePlate}</Text>
               </View>
             </View>
-            <View style={{ marginRight: 10 }}>
-              <Icon size={25} name='filter-plus-outline' color="black" onPress={() => filter()} style={{ marginRight: 5 }} />
+            <View style={{ marginRight: 10, alignItems: "flex-end", justifyContent: "flex-start" }}>
+              <Icon size={25} name='filter-plus-outline' color="black" onPress={() => setShowFilter(!showFilter)} style={{ marginTop: 5, marginRight: 5 }} />
+              <View style={{ flexDirection: 'row', alignItems: "center" }}>
+                <Text style={{ marginTop: 10 }}>Total costuri: </Text>
+                <Text style={{ fontWeight: "bold", marginTop: 10 }}>{calculateCosts()}</Text>
+              </View>
+
             </View>
           </View>
           : null}
-        {
-          activities.map(activity => (
-            <ListItem key={i} bottomDivider style={{ width: '100%' }}
-              Component={TouchableScale}
-              friction={95} //
-              tension={100} // These props are passed to the parent component (here TouchableScale)
-              onPress={() => navigation.navigate("ManageActivityScreen", { activityId: activity.id })}
-              activeScale={0.95} >
-              <Avatar source={{ uri: activity.categoryImage }} />
-              <ListItem.Content>
-                <ListItem.Title>{activity.data.title}</ListItem.Title>
-                <ListItem.Subtitle>{activity.data.description}</ListItem.Subtitle>
-                <Text>{formatDate(activity.data.date)}</Text>
-                <Text style={{ alignSelf: 'flex-end', fontWeight: "bold" }}>{activity.data.cost}</Text>
-              </ListItem.Content>
-              <ListItem.Chevron size={30} />
-            </ListItem>
-          ))
-        }
+        {activities.length > 0 && showFilter == false ?
+          <ScrollView style={{ marginTop: 10 }}>
+            {activities.map(activity => (
+              <ListItem bottomDivider key={activity.id} style={{ width: '100%' }}
+                Component={TouchableScale}
+                friction={95} //
+                tension={100} // These props are passed to the parent component (here TouchableScale)
+                onPress={() => navigation.navigate("ManageActivityScreen", { activityId: activity.id })}
+                activeScale={0.95} >
+                <Avatar source={{ uri: activity.categoryImage }} />
+                <ListItem.Content>
+                  <ListItem.Title>{activity.title}</ListItem.Title>
+                  <ListItem.Subtitle>{activity.description}</ListItem.Subtitle>
+                  <Text>{formatDate(activity.date)}</Text>
+                  {activity.cost != undefined ?
+                    <View style={{ flexDirection: "row", alignSelf: 'flex-end' }}>
+                      <Text style={{ alignSelf: 'flex-end', fontWeight: "bold" }}>{activity.cost}</Text>
+                      <Text> lei</Text>
+                    </View>
+                    : null}
+                </ListItem.Content>
+                <ListItem.Chevron size={30} />
+              </ListItem>
+            ))}
+          </ScrollView>
+          : null}
+        {showFilter == true && showCategories == false && showTimePeriod == false ?
+          <View style={{ alignItems: "center" }}>
+            <Text h5 style={{ marginTop: 10, marginLeft: 10 }}>Alege filtru</Text>
+            <TouchableOpacity onPress={() => setShowCategories(!showCategories)}>
+              <View style={{
+                flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
+                width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
+              }}>
+                <View style={{ flexDirection: "row", alignItems: "center", }}>
+                  <Text style={{ fontSize: 18 }}>Categorie: </Text>
+                  <Text style={{ fontSize: 18, fontWeight: "bold" }}>{category != null ? category.data.name : null}</Text>
+                </View>
+                <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowTimePeriod(!showTimePeriod)}>
+              <View style={{
+                flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
+                width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
+              }}>
+                <View style={{ flexDirection: "row", alignItems: "center", }}>
+                  <Text style={{ fontSize: 18 }}>Perioadă: </Text>
+                  <Text style={{ fontSize: 18, fontWeight: "bold" }}>{timePeriod != null ? timePeriod.name : null}</Text>
+                </View>
+                <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => deleteFilters()}>
+              <View style={{
+                flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "black",
+                width: windowWidth * 85 / 100, padding: 5, borderRadius: 20, marginTop: 15
+              }}>
+                <Text style={{ fontSize: 18, textAlign: "center", color: "white" }}>Șterge filtre</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+          : null}
+        {showFilter == true && showCategories == true ?
+          <View>
+            <View style={{ justifyContent: "center", alignItems: "center" }}>
+              <TouchableOpacity onPress={() => setShowCategories(!showCategories)}>
+                <View style={{
+                  flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "white",
+                  width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
+                }}>
+                  <Text style={{ fontSize: 16 }}>Înapoi</Text>
+                </View>
+              </TouchableOpacity>
+              {categories.map(item => (
+                <TouchableOpacity onPress={() => selectCategory(item)}>
+                  <View style={{
+                    flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
+                    width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
+                  }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", }}>
+                      <Image source={{ uri: item.data.image }} style={{ width: 35, height: 35, marginRight: 10, marginLeft: 5 }}></Image>
+                      <Text style={{ fontSize: 18 }}>{item.data.name}</Text>
+                    </View>
+                    <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          : null}
+        {showFilter == true && showTimePeriod == true ?
+          <View>
+            <View style={{ justifyContent: "center", alignItems: "center" }}>
+              <TouchableOpacity onPress={() => setShowTimePeriod(!showTimePeriod)}>
+                <View style={{
+                  flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "white",
+                  width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
+                }}>
+                  <Text style={{ fontSize: 16 }}>Înapoi</Text>
+                </View>
+              </TouchableOpacity>
+              {timePeriodValues.map(item => (
+                <TouchableOpacity onPress={() => selectTimePeriod(item)}>
+                  <View style={{
+                    flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
+                    width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
+                  }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", }}>
+                      <Text style={{ fontSize: 18 }}>{item.name}</Text>
+                    </View>
+                    <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          : null}
+
       </View>
 
       <ActionButton
