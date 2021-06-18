@@ -6,7 +6,7 @@ import { AuthContext } from '../navigation/AuthProvider';
 import firestore from '@react-native-firebase/firestore';
 import { windowWidth, windowHeight } from "../utils/Dimensions";
 import DateTimePicker from "react-native-modal-datetime-picker";
-import Moment from 'moment'
+import Moment from 'moment';
 
 
 const CarAlertsScreen = ({ route, navigation }) => {
@@ -84,7 +84,7 @@ const CarAlertsScreen = ({ route, navigation }) => {
     }
 
     const getStatusColor = (date) => {
-        if (date == undefined) {
+        if (date == null) {
             return "black";
         }
         if (Moment(date).isAfter(Moment()) == true) {

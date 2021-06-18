@@ -31,7 +31,23 @@ const CarActionsScreen = ({ route, navigation }) => {
 
     return (
         <ScrollView>
-            <View style={styles.container}>
+            <View style={styles.container, {marginBottom:20}}>
+            <Card>
+                    <TouchableOpacity onPress={() => navigation.navigate("ManageCarScreen", {carId: carId})} >
+                    <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start", width: windowWidth * 85 / 100 }}>
+                        <View style={{
+                            height: 55, width: 55, alignItems: "center", justifyContent: "center", marginRight: 10,
+                        }}>
+                            <Icon
+                                size={35}
+                                name='edit'
+                                type='Ionicons'
+                                color='black'/>
+                        </View>
+                        <Text style={{  fontSize: 20,}}>Editează mașina</Text>
+                    </View>
+                    </TouchableOpacity>
+                </Card>
                 <Card>
                     <TouchableOpacity onPress={() => navigation.navigate("MileageUpdateScreen", {carId: carId})} >
                     <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start", width: windowWidth * 85 / 100 }}>
@@ -42,8 +58,7 @@ const CarActionsScreen = ({ route, navigation }) => {
                                 size={35}
                                 name='settings'
                                 type='Ionicons'
-                                color='black'
-                                onPress={choosePhotoFromLibrary} />
+                                color='black'/>
                         </View>
                         <Text style={{  fontSize: 20,}}>Actualizează kilometraj</Text>
                     </View>

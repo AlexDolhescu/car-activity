@@ -1,59 +1,82 @@
 import React, { useState, useContext } from 'react';
-import { View, Alert, Text, StyleSheet, ScrollView } from 'react-native';
-import { TextInput, Button, Checkbox } from 'react-native-paper';
-import { Card } from 'react-native-elements'
+import { View, Alert, StyleSheet, ScrollView, Image, TextInput as TextInputRN, Switch } from 'react-native';
+import { Button, Checkbox } from 'react-native-paper';
+import { Card, Text } from 'react-native-elements'
 import { AuthContext } from '../navigation/AuthProvider';
-import PickerSelect from 'react-native-picker-select';
 import firestore from '@react-native-firebase/firestore';
+import { TouchableOpacity } from 'react-native';
+import { windowWidth, windowHeight } from "../utils/Dimensions";
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const ManageCarScreen = ({ navigation, carValue }) => {
-  // intra cu elementul car
+const ManageCarScreen = ({ route, navigation }) => {
+
+  const { carId } = route.params;
   const { user, logout } = useContext(AuthContext);
   const [car, setCar] = useState({
-    brandId: carValue ? carValue.brandId : null,
-    modelId: carValue ? carValue.modelId : null,
-    vin: carValue ? carValue.vin : null,
-    km: carValue ? carValue.km : null,
-    fabricationYear: carValue ? carValue.fabricationYear : null,
-    cilindricalCapacity: carValue ? carValue.cilindricalCapacity : null,
-    color: carValue ? carValue.color : null,
-    kw: carValue ? carValue.kw : null,
-    hoursePower: carValue ? carValue.hoursePower : null,
-    kmToService: carValue ? carValue.kmToService : null,
-    daysToService: carValue ? carValue.daysToService : null,
-    kmIntervalService: carValue ? carValue.kmIntervalService : "15000",
-    daysIntervalService: carValue ? carValue.daysIntervalService : "365",
-    showGeneralData: carValue ? carValue.showGeneralData : true,
-    showGallery: carValue ? carValue.showGallery : true,
-    showActivities: carValue ? carValue.showActivities : true,
-    userId: carValue ? carValue.userId : user.uid,
+    kmIntervalService: "15000",
+    daysIntervalService: "365",
+    showGeneralData: true,
+    showGallery: true,
+    showActivities: true,
   });
+  const [brands, setBrands] = useState([]);
+  const [models, setModels] = useState([]);
+  const [listItems, setListItems] = useState([]);
   const [serviceInterval, setServiceInterval] = useState(true);
   const [refreshServiceInterval, setRefreshServiceInterval] = useState(false);
 
-  const brands = [
-    { label: 'Vw', value: '1' },
-    { label: 'Bmw', value: '2' },
-    { label: 'Audi', value: '3' },
-  ];
+  React.useEffect(() => {
+    void async function fetchData() {
+      if (carId == undefined) {
+        loadBrands();
+      } else {
+        loadCarData(carId)
+      }
+    }();
+  }, []);
 
-  const models = [
-    { label: 'Golf', value: '1' },
-    { label: 'Pasat', value: '2' },
-    { label: 'Arteon', value: '3' },
-  ];
-
-  const showDatePicker = () => {
-    setDatePickerVisibility(true);
+  const loadBrands = () => {
+    firestore()
+      .collection('brand')
+      .get()
+      .then(async (querySnapshot) => {
+        let brands = querySnapshot.docs.map(doc => { return { data: doc.data(), id: doc.id } })
+        setBrands(brands);
+        setListItems(brands);
+      })
+      .catch((error) => {
+        console.log('Something went wrong with find brands to firestore.', error);
+      });
   };
 
-  const hideDatePicker = () => {
-    setDatePickerVisibility(false);
+  const loadCarData = (carId) => {
+    firestore()
+      .collection('car')
+      .doc(carId)
+      .get()
+      .then((car) => {
+        setCar({ ...car, ...car.data() });
+      })
+      .catch((error) => {
+        console.log('Something went wrong with find car to firestore.', error);
+      });
   };
 
-  const handleDatePicked = (date) => {
-    { setActivity({ ...car, fabricationYear: date }) }
-    hideDatePicker();
+  const getModelsByCarId = (brandId) => {
+    return new Promise((resolve, reject) => {
+      firestore()
+        .collection('model')
+        .where("brandId", "==", brandId)
+        .get()
+        .then(async (querySnapshot) => {
+          let models = querySnapshot.docs.map(doc => { return { data: doc.data(), id: doc.id } })
+          setModels(models);
+          resolve(models);
+        })
+        .catch((error) => {
+          console.log('Something went wrong with find models to firestore.', error);
+        });
+    });
   };
 
   const serviceIntervalPress = () => {
@@ -66,12 +89,7 @@ const ManageCarScreen = ({ navigation, carValue }) => {
     if (car.showGeneralData && car.showGallery && car.showActivities) {
       return 'checked';
     }
-    if (!car.showGeneralData && !car.showGallery && !car.showActivities) {
-      return 'unchecked';
-    }
-    if (car.showGeneralData || car.showGallery || car.showActivities) {
-      return 'indeterminate';
-    }
+    return 'unchecked';
   }
 
   const showPublicCarPress = () => {
@@ -94,17 +112,7 @@ const ManageCarScreen = ({ navigation, carValue }) => {
     setCar({ ...car, showActivities: !car.showActivities })
   }
 
-  const saveCar = () => {
-    //validari - km, zile cu - | an > an curent
-    if (car.brandId == null || car.modelId == null || car.vin == null || car.cilindricalCapacity == null || car.kw == null || car.fabricationYear == null
-      || (serviceInterval == true && (car.kmIntervalService == null || car.kmToService == null || car.daysIntervalService == null || car.daysToService == null))) {
-      Alert.alert(
-        'Atenție',
-        'Există câmpuri necompletate!',
-      );
-      return;
-      // de cautat VIN sa nu existe deja masina bagata
-    }
+  const addCar = () => {
     firestore()
       .collection('car')
       .add({
@@ -112,9 +120,9 @@ const ManageCarScreen = ({ navigation, carValue }) => {
         modelId: car.modelId,
         vin: car.vin,
         km: car.km,
+        licencePlate: car.licencePlate,
         fabricationYear: car.fabricationYear,
         cilindricalCapacity: car.cilindricalCapacity,
-        color: car.color,
         kw: car.kw,
         hoursePower: car.hoursePower,
         kmToService: car.kmToService,
@@ -124,210 +132,365 @@ const ManageCarScreen = ({ navigation, carValue }) => {
         showGeneralData: car.showGeneralData,
         showGallery: car.showGallery,
         showActivities: car.showActivities,
-        userId: car.userId,
+        rcaAlertDate: null,
+        itpAlertDate: null,
+        rovinietaAlertDate: null,
+        createdDate: firestore.Timestamp.fromDate(new Date()),
         postTime: firestore.Timestamp.fromDate(new Date())
       })
-      .then(() => {
-        Alert.alert(
-          'Succes',
-          'Mașina a fost salvată cu succes!',
-        );
-        // navigation.navigate("ActivityScreen")
+      .then(async () => {
+        if (carId == undefined) {
+          let findCar = await getCarByVin(car.vin);
+          await saveCarUser(findCar[0].id, user.uid);
+          Alert.alert(
+            'Succes',
+            'Mașina a fost salvată cu succes!',
+          );
+        }
+        navigation.navigate("HomeScreen");
       })
       .catch((error) => {
         console.log('Something went wrong with added car to firestore.', error);
       });
+  }
+
+  const updateCar = () => {
+    firestore()
+      .collection('car')
+      .doc(carId)
+      .update({
+        brandId: car.brandId,
+        modelId: car.modelId,
+        vin: car.vin,
+        km: car.km,
+        licencePlate: car.licencePlate,
+        fabricationYear: car.fabricationYear,
+        cilindricalCapacity: car.cilindricalCapacity,
+        kw: car.kw,
+        hoursePower: car.hoursePower,
+        kmToService: car.kmToService,
+        daysToService: car.daysToService,
+        kmIntervalService: car.kmIntervalService,
+        daysIntervalService: car.daysIntervalService,
+        showGeneralData: car.showGeneralData,
+        showGallery: car.showGallery,
+        showActivities: car.showActivities,
+        rcaAlertDate: car.rcaAlertDate,
+        itpAlertDate: car.itpAlertDate,
+        rovinietaAlertDate: car.rovinietaAlertDate,
+        createdDate: car.createdDate,
+        postTime: firestore.Timestamp.fromDate(new Date())
+      })
+      .then(async () => {
+        Alert.alert(
+          'Succes',
+          'Mașina a fost salvată cu succes!',
+        );
+        navigation.navigate("HomeScreen");
+      })
+      .catch((error) => {
+        console.log('Something went wrong with added car to firestore.', error);
+      });
+  }
+
+  const saveCar = async () => {
+    if (car.brandId == null || car.modelId == null || car.vin == null || car.licencePlate == null || car.fabricationYear == null || car.vin.length < 17) {
+      Alert.alert(
+        'Atenție',
+        'Există câmpuri obligatorii necompletate!',
+      );
+      return;
+    }
+    if (carId == undefined) {
+      let existCar = await getCarByVin(car.vin);
+      if (existCar.length > 0) {
+        Alert.alert(
+          'Atenție',
+          'Există deja o mașină cu această serie de caroserie ! Dacă aveți probleme contactați-ne în secțiunea de Suport !',
+        );
+        return;
+      }
+      addCar();
+      return;
+    }
+    updateCar();
   };
 
+  const getCarByVin = (carVin) => {
+    return new Promise((resolve, reject) => {
+      firestore()
+        .collection('car')
+        .where("vin", "==", carVin)
+        .get()
+        .then((querySnapshot) => {
+          let chartData = querySnapshot.docs.map(doc => doc)
+          if (chartData.length > 0) {
+            resolve(chartData);
+          }
+          resolve([]);
+        })
+        .catch((error) => {
+          console.log('Something went wrong with find user to firestore.', error);
+        });
+    });
+  };
+
+  const saveCarUser = (carId, userId) => {
+    return new Promise((resolve, reject) => {
+      firestore()
+        .collection('carUser')
+        .add({
+          carId: carId,
+          userId: userId,
+          isSelected: true,
+          isAdmin: true
+        })
+        .then(() => {
+          resolve();
+        })
+        .catch((error) => {
+          console.log('Something went wrong with add carUser to firestore.', error);
+        });
+    });
+  };
+
+  const selectItem = async (item) => {
+    if (carId == undefined && car.brandId == undefined) {
+      setCar({ ...car, brandId: item.id })
+      let brands = await getModelsByCarId(item.id);
+      setListItems(brands);
+      return;
+    }
+    setCar({ ...car, modelId: item.id })
+  }
+
   return (
-    <ScrollView>
-      <View style={styles.container}>
-        <PickerSelect
-          onValueChange={(value) => setCar({ ...car, brandId: value })}
-          placeholder={{ label: "Selectează o marcă", value: null }}
-          value={car.brandId}
-          style={pickerSelectStyles}
-          items={brands}
-        />
-        <PickerSelect
-          onValueChange={(value) => setCar({ ...car, modelId: value })}
-          placeholder={{ label: "Selectează un model", value: null }}
-          value={car.modelId}
-          style={pickerSelectStyles}
-          items={models}
-        />
-        <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start", marginTop: 10 }}>
-          <TextInput
-            label="Km actuali"
-            value={car.KM}
-            mode="outlined"
-            maxLength={17}
-            onChangeText={value => setCar({ ...car, km: value })}
-            theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-            style={{ width: '54%', marginRight: '2%' }}
-          />
-          <TextInput
-            label="Culoare"
-            value={car.color}
-            mode="outlined"
-            maxLength={17}
-            onChangeText={value => setCar({ ...car, color: value })}
-            theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-            style={{ width: '40%' }}
-          />
-        </View>
-        <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start", marginTop: 10 }}>
-          <TextInput
-            label="Serie caroserie (VIN)"
-            value={car.vin}
-            mode="outlined"
-            maxLength={17}
-            onChangeText={vin => setCar({ ...car, vin: vin })}
-            theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-            style={{ width: '56%', marginTop: 10, marginRight: '2%' }}
-          />
-          <TextInput
-            label="Motor (cm3)"
-            value={car.cilindricalCapacity}
-            mode="outlined"
-            maxLength={17}
-            onChangeText={cilindricalCapacity => setCar({ ...car, cilindricalCapacity: cilindricalCapacity })}
-            theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-            style={{ width: '38%', marginTop: 10 }}
-          />
-        </View>
-        <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start", marginTop: 10 }}>
-          <TextInput
-            label="An fabricație"
-            value={car.fabricationYear}
-            keyboardType='numeric'
-            mode="outlined"
-            onChangeText={fabricationYear => setCar({ ...car, fabricationYear: fabricationYear })}
-            maxLength={7}
-            theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-            style={{ width: '35%', marginRight: '2%' }}
-          />
-          <TextInput
-            label="KW stock"
-            value={car.kw}
-            keyboardType='numeric'
-            mode="outlined"
-            maxLength={17}
-            onChangeText={kw => setCar({ ...car, kw: kw })}
-            theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-            style={{ width: '25%', marginRight: '2%' }}
-          />
-          <TextInput
-            label="CP actuali"
-            value={car.hoursePower}
-            keyboardType='numeric'
-            mode="outlined"
-            maxLength={17}
-            onChangeText={hoursePower => setCar({ ...car, hoursePower: hoursePower })}
-            theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-            style={{ width: '27%' }}
-          />
-        </View>
-        <View style={{ backgroundColor: '#dedede', marginTop: 10, paddingBottom: 10, alignItems: 'center', width: '100%' }}>
-          <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", alignSelf: "center" }}>
-            <Checkbox
-              status={serviceInterval ? 'checked' : 'unchecked'}
-              color='red'
-              uncheckedColor='black'
-              onPress={() => serviceIntervalPress()}
-            />
-            <Text>Interval service</Text>
-          </View>
-          <View refresh={refreshServiceInterval} style={{ width: '96%', marginTop: -10, flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
-            <TextInput
-              label="Km până la revizie"
-              value={car.kmToService}
-              keyboardType='numeric'
-              mode="outlined"
-              disabled={!serviceInterval}
-              onChangeText={kmToService => setCar({ ...car, kmToService: kmToService })}
-              maxLength={7}
-              theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-              style={{ width: '54%', marginTop: 10, marginRight: '2%' }}
-            />
-            <TextInput
-              label="Zile până la revizie"
-              value={car.daysToService}
-              keyboardType='numeric'
-              mode="outlined"
-              disabled={!serviceInterval}
-              onChangeText={daysToService => setCar({ ...car, daysToService: daysToService })}
-              maxLength={7}
-              theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-              style={{ width: '44%', marginTop: 10 }}
-            />
-          </View>
-          <View style={{ width: '96%', marginTop: 10, flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
-            <TextInput
-              label="Interval km revizie"
-              value={car.kmIntervalService}
-              keyboardType='numeric'
-              mode="outlined"
-              disabled={!serviceInterval}
-              onChangeText={kmIntervalService => setCar({ ...car, kmIntervalService: kmIntervalService })}
-              maxLength={7}
-              theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-              style={{ width: '54%', marginTop: 10, marginRight: '2%' }}
-            />
-            <TextInput
-              label="Interval zile revizie"
-              value={car.daysIntervalService}
-              keyboardType='numeric'
-              mode="outlined"
-              disabled={!serviceInterval}
-              onChangeText={daysIntervalService => setCar({ ...car, daysIntervalService: daysIntervalService })}
-              maxLength={7}
-              theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-              style={{ width: '44%', marginTop: 10 }}
-            />
+    <View>
+      {(car.brandId == undefined || car.modelId == undefined) && listItems.length > 0 ?
+        <View>
+          <Text h4 style={{ marginTop: 10, marginLeft: 10 }}>{carId == undefined ? "Alege o marcă" : "Alege un model"}</Text>
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
+            {listItems.map(item => (
+              <TouchableOpacity onPress={() => selectItem(item)}>
+                <View style={{
+                  flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
+                  width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
+                }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", }}>
+                    <Image source={{ uri: item.data.image }} style={{ width: 35, height: 35, marginRight: 10, marginLeft: 5 }}></Image>
+                    <Text h4>{item.data.name}</Text>
+                  </View>
+                  <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
+                </View>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", alignSelf: "center", width: '96%' }}>
-          <Checkbox
-            status={showPublicCar()}
-            color='red'
-            uncheckedColor='black'
-            onPress={() => showPublicCarPress()}
-          />
-          <Text>Afișează mașina public</Text>
-        </View>
-        <View style={{ width: '92%', marginLeft: '4%' }}>
-          <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", alignSelf: "center", width: '96%' }}>
-            <Checkbox
-              status={car.showGeneralData ? 'checked' : 'unchecked'}
-              color='red'
-              uncheckedColor='black'
-              onPress={() => showGeneralDataPress()}
-            />
-            <Text>Afișează date generale</Text>
+        :
+        <ScrollView>
+          <View style={styles.container}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: 'black' }} />
+              <View>
+                <Text style={{ width: 100, textAlign: 'center' }}>Date mașină</Text>
+              </View>
+              <View style={{ flex: 1, height: 1, backgroundColor: 'black' }} />
+            </View>
+            <View style={{
+              backgroundColor: "white", width: windowWidth * 85 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+              flexDirection: "row", alignItems: "center", alignContent: "flex-start"
+            }}>
+              <Text style={{ fontWeight: "bold" }}>*Serie caroserie (VIN) </Text>
+              <TextInputRN
+                onChangeText={vin => setCar({ ...car, vin: vin })}
+                maxLength={17}
+                autoCapitalize="characters"
+                placeholder="WVWZZZ1KZ8U40245"
+                value={car.vin}
+              />
+            </View>
+            <View style={{
+              backgroundColor: "white", width: windowWidth * 85 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+              flexDirection: "row", alignItems: "center", alignContent: "flex-start"
+            }}>
+              <Text style={{ fontWeight: "bold", }}>*Km actuali </Text>
+              <TextInputRN
+                onChangeText={value => setCar({ ...car, km: value })}
+                maxLength={7}
+                placeholder="120366"
+                keyboardType="numeric"
+                value={car.km}
+              />
+            </View>
+            <View style={{
+              backgroundColor: "white", width: windowWidth * 85 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+              flexDirection: "row", alignItems: "center", alignContent: "flex-start"
+            }}>
+              <Text style={{ fontWeight: "bold", }}>*Număr înmatriculare </Text>
+              <TextInputRN
+                onChangeText={value => setCar({ ...car, licencePlate: value })}
+                placeholder="IS 84 DOL"
+                autoCapitalize="characters"
+                value={car.licencePlate}
+              />
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
+              <View style={{
+                backgroundColor: "white", width: windowWidth * 40 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+                flexDirection: "row", alignItems: "center", alignContent: "flex-start", marginRight: 10
+              }}>
+                <Text style={{ fontWeight: "bold", }}>*An fabricație </Text>
+                <TextInputRN
+                  onChangeText={value => setCar({ ...car, fabricationYear: value })}
+                  maxLength={4}
+                  placeholder="2021"
+                  keyboardType="numeric"
+                  value={car.fabricationYear}
+                />
+              </View>
+              <View style={{
+                backgroundColor: "white", width: windowWidth * 40 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+                flexDirection: "row", alignItems: "center", alignContent: "flex-start"
+              }}>
+                <Text style={{ fontWeight: "bold", }}>Motor </Text>
+                <TextInputRN
+                  onChangeText={value => setCar({ ...car, cilindricalCapacity: value })}
+                  maxLength={4}
+                  placeholder="1998 cm3"
+                  keyboardType="numeric"
+                  value={car.cilindricalCapacity}
+                />
+              </View>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
+              <View style={{
+                backgroundColor: "white", width: windowWidth * 40 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+                flexDirection: "row", alignItems: "center", alignContent: "flex-start", marginRight: 10
+              }}>
+                <Text style={{ fontWeight: "bold", }}>Kw stock </Text>
+                <TextInputRN
+                  onChangeText={value => setCar({ ...car, kw: value })}
+                  maxLength={4}
+                  placeholder="77 kw"
+                  keyboardType="numeric"
+                  value={car.kw}
+                />
+              </View>
+              <View style={{
+                backgroundColor: "white", width: windowWidth * 40 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+                flexDirection: "row", alignItems: "center", alignContent: "flex-start"
+              }}>
+                <Text style={{ fontWeight: "bold", }}>CP actuali </Text>
+                <TextInputRN
+                  onChangeText={value => setCar({ ...car, hoursePower: value })}
+                  maxLength={4}
+                  placeholder="210 CP"
+                  keyboardType="numeric"
+                  value={car.hoursePower}
+                />
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: 'black' }} />
+              <View>
+                <Text style={{ width: 120, textAlign: 'center' }}>Interval service</Text>
+              </View>
+              <View style={{ flex: 1, height: 1, backgroundColor: 'black' }} />
+            </View>
+
+            <View style={{
+              backgroundColor: "white", width: windowWidth * 85 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+              flexDirection: "row", alignItems: "center", alignContent: "flex-start"
+            }}>
+              <Text style={{ fontWeight: "bold", }}>Km până la revizie </Text>
+              <TextInputRN
+                onChangeText={value => setCar({ ...car, kmToService: value })}
+                placeholder="12500 km"
+                maxLength={5}
+                keyboardType="numeric"
+                value={car.kmToService}
+              />
+            </View>
+            <View style={{
+              backgroundColor: "white", width: windowWidth * 85 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+              flexDirection: "row", alignItems: "center", alignContent: "flex-start"
+            }}>
+              <Text style={{ fontWeight: "bold", }}>Zile până la revizie </Text>
+              <TextInputRN
+                onChangeText={value => setCar({ ...car, daysToService: value })}
+                placeholder="280 zile"
+                keyboardType="numeric"
+                maxLength={3}
+                value={car.daysToService}
+              />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: 'black' }} />
+              <View>
+                <Text style={{ width: 200, textAlign: 'center' }}>Setări afișare mașină public</Text>
+              </View>
+              <View style={{ flex: 1, height: 1, backgroundColor: 'black' }} />
+            </View>
+            <View style={{ width: '96%', marginTop: 10 }}>
+              <TouchableOpacity onPress={() => showPublicCarPress()} style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
+                <Switch
+                  trackColor={{ false: "#767577", true: "#767577" }}
+                  thumbColor={showPublicCar() == "checked" ? "#f54b63" : "#f4f3f4"}
+                  ios_backgroundColor="#3e3e3e"
+                  onValueChange={() => showPublicCarPress()}
+                  value={showPublicCar() == "checked" ? true : false}
+                />
+                <Text>Afișează mașina public</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ width: '92%', marginLeft: '4%' }}>
+              <TouchableOpacity onPress={() => showGeneralDataPress()}>
+                <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", alignSelf: "center", width: '96%' }}>
+                  <Text>Afișează date generale</Text>
+                  <Switch
+                    trackColor={{ false: "#767577", true: "#767577" }}
+                    thumbColor={car.showGeneralData ? "#f54b63" : "#f4f3f4"}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={() => showGeneralDataPress()}
+                    value={car.showGeneralData}
+                  />
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => showGalleryPress()}>
+                <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", alignSelf: "center", width: '96%' }}>
+                  <Text>Afișează galerie</Text>
+                  <Switch
+                    trackColor={{ false: "#767577", true: "#767577" }}
+                    thumbColor={car.showGallery ? "#f54b63" : "#f4f3f4"}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={() => showGalleryPress()}
+                    value={car.showGallery}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => showActivitiesPress()}>
+                <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", alignSelf: "center", width: '96%' }}>
+                  <Text>Afișează activități</Text>
+                  <Switch
+                    trackColor={{ false: "#767577", true: "#767577" }}
+                    thumbColor={car.showActivities ? "#f54b63" : "#f4f3f4"}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={() => showActivitiesPress()}
+                    value={car.showActivities}
+                  />
+                </View>
+
+              </TouchableOpacity>
+
+            </View>
+            <Button style={{ width: 300, marginBottom: 20, marginTop: 20, marginRight: '2%', borderRadius: 50 }} mode="contained" color="black"
+              onPress={() => saveCar()}
+            >Salvează</Button>
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", alignSelf: "center", width: '96%' }}>
-            <Checkbox
-              status={car.showGallery ? 'checked' : 'unchecked'}
-              color='red'
-              uncheckedColor='black'
-              onPress={() => showGalleryPress()}
-            />
-            <Text>Afișează galerie</Text>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", alignSelf: "center", width: '96%' }}>
-            <Checkbox
-              status={car.showActivities ? 'checked' : 'unchecked'}
-              color='red'
-              uncheckedColor='black'
-              onPress={() => showActivitiesPress()}
-            />
-            <Text>Afișează activități</Text>
-          </View>
-        </View>
-        <Button style={{ marginTop: 10, width: 130, marginBottom: 20 }} mode="contained" color="black" onPress={() => saveCar()}>Salvează</Button>
-      </View>
-    </ScrollView >
+        </ScrollView >
+      }
+    </View>
   );
 };
 
@@ -339,32 +502,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10
-  },
-});
-
-const pickerSelectStyles = StyleSheet.create({
-  inputIOS: {
-    width: '96%',
-    alignSelf: "center",
-    fontSize: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 4,
-    color: 'black',
-    paddingRight: 30, // to ensure the text is never behind the icon
-  },
-  inputAndroid: {
-    width: '96%',
-    alignSelf: "center",
-    fontSize: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderWidth: 10,
-    borderColor: 'black',
-    borderRadius: 8,
-    color: 'black',
-    paddingRight: 30, // to ensure the text is never behind the icon
   },
 });

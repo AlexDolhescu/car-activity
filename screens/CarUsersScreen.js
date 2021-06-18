@@ -59,7 +59,7 @@ const CarUsersScreen = ({ route, navigation }) => {
     const getUserByEmail = (email) => {
         return new Promise((resolve, reject) => {
             firestore()
-                .collection('users')
+                .collection('user')
                 .where("email", "==", email)
                 .get()
                 .then((querySnapshot) => {
@@ -78,7 +78,7 @@ const CarUsersScreen = ({ route, navigation }) => {
     const getUserById = (userId) => {
         return new Promise((resolve, reject) => {
             firestore()
-                .collection('users')
+                .collection('user')
                 .doc(userId)
                 .get()
                 .then((user) => {

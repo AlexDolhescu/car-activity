@@ -1,50 +1,41 @@
 import React, { useState, useContext } from 'react';
-import { View, Alert, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Alert, Text, StyleSheet, Image, TouchableOpacity, TextInput as TextInputRN, Switch, ScrollView } from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
 import DateTimePicker from "react-native-modal-datetime-picker";
-import { Icon } from 'react-native-elements'
 import PickerSelect from 'react-native-picker-select';
 import ImageView from "react-native-image-viewing";
 import ImageList from "../utils/ImageList";
 import ImageFooter from "../utils/ImageFooter";
 import ImagePicker from 'react-native-image-crop-picker';
-import { ImageComponent } from 'react-native';
 import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
+import { windowWidth, windowHeight } from "../utils/Dimensions";
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Moment from 'moment'
 
-const ManageActivityScreen = ({ navigation }) => {
-  // intra cu carId - si eventual elementul
+const ManageActivityScreen = ({ route, navigation }) => {
+
+  const { activityId, carId } = route.params;
   const [activity, setActivity] = useState({
     title: '',
     description: '',
     date: new Date(),
     categoryId: null,
     km: null,
-    price: null,
+    cost: null,
     images: [],
   });
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isImageViewerVisible, setImageViewerVisible] = useState(false);
   const [currentImageIndex, setImageIndex] = useState(0);
   const [refresh, setRefresh] = useState(false);
-  // const [images, setImages] = useState([
-  //   {
-  //     uri: "https://images.unsplash.com/photo-1571501679680-de32f1e7aad4",
-  //   },
-  //   {
-  //     uri: "https://images.unsplash.com/photo-1573273787173-0eb81a833b34",
-  //   },
-  //   {
-  //     uri: "https://images.unsplash.com/photo-1569569970363-df7b6160d111",
-  //   }
-  // ]);
-
+  const [updateKm, setUpdateKm] = useState(true);
 
   // de luat categoriile din baza - nomenclatoare la fiecare
   const items = [
-    { label: 'Revizie', value: '0' },
-    { label: 'Tunning', value: '1' },
-    { label: 'Altele', value: '2' },
+    { label: 'Revizie', value: '1' },
+    { label: 'Tunning', value: '2' },
+    { label: 'Altele', value: '3' },
   ];
 
   const showDatePicker = () => {
@@ -92,6 +83,13 @@ const ManageActivityScreen = ({ navigation }) => {
     ImagePicker.openPicker({
       multiple: true
     }).then((choosedImages) => {
+      if (choosedImages.length + activity.images.length > 5) {
+        Alert.alert(
+          'Atenție',
+          'Puteți adăuga maxim 5 poze!',
+        );
+        return;
+      }
       let existingImages = [...activity.images];
       choosedImages.forEach(image => {
         const imageUri = Platform.OS === 'ios' ? image.sourceURL : image.path;
@@ -103,9 +101,7 @@ const ManageActivityScreen = ({ navigation }) => {
   };
 
   const saveActivity = () => {
-    // TODO verifica fieldurile si da eroare daca nu completeaza 
-    // sau disable la buton save - nu merge caci dupa fiecare modificare ar trebui sa dau refresh la buton
-    if (activity.categoryId == null || activity.km == null) {
+    if (activity.categoryId == null || activity.km == null || activity.title == null) {
       Alert.alert(
         'Atenție',
         'Există câmpuri necompletate!',
@@ -121,7 +117,7 @@ const ManageActivityScreen = ({ navigation }) => {
         date: activity.date,
         categoryId: activity.categoryId,
         km: activity.km,
-        price: activity.price,
+        cost: activity.cost,
         postTime: firestore.Timestamp.fromDate(new Date())
       })
       .then((activitySaved) => {
@@ -156,119 +152,141 @@ const ManageActivityScreen = ({ navigation }) => {
       });
   };
 
+  const formatDate = (date) => {
+    if (date == null) {
+      return;
+    }
+    return Moment(date).format("DD/MM/YYYY");
+  }
+
   return (
-
-    <View style={styles.container}>
-      <TextInput
-        label="Titlu"
-        value={activity.title}
-        mode="outlined"
-        multiline
-        onChangeText={title => setActivity({ ...activity, title: title })}
-        theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-        style={{ width: '96%', marginTop: 10 }}
-      />
-      <PickerSelect
-        onValueChange={(value) => setActivity({ ...activity, categoryId: value })}
-        placeholder={{ label: "Selectează o categorie", value: null }}
-        value={activity.categoryId}
-        style={pickerSelectStyles}
-        items={items}
-      />
-      <TextInput
-        label="Descriere"
-        value={activity.description}
-        mode="outlined"
-        multiline
-        onChangeText={description => setActivity({ ...activity, description: description })}
-        theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-        style={{ width: '96%', marginTop: 10 }}
-      />
-
-      <View style={{ width: '96%', marginTop: 10, flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
-        {activity.images.length > 0 ?
-          <Icon
-            style={{ marginRight: 5 }}
-            name='add-circle-outline'
-            type='Ionicons'
-            color='black'
-            onPress={choosePhotoFromLibrary} /> : null}
-        {activity.images.length > 0 ?
-          <ImageList
-            refresh={refresh}
-            images={activity.images.map((image) => image.uri)}
-            imageIndex={currentImageIndex}
-            onPress={(index) => onSelect(activity.images, index)}
-            shift={0.25}
+    <ScrollView>
+      <View style={styles.container}>
+        <View style={{
+          backgroundColor: "white", width: windowWidth * 85 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+          flexDirection: "row", alignItems: "center", alignContent: "flex-start"
+        }}>
+          <Text style={{ fontWeight: "bold" }}>*Titlu </Text>
+          <TextInputRN
+            onChangeText={title => setActivity({ ...activity, title: title })}
+            maxLength={17}
+            multiline
+            placeholder="Revizie ulei și filtre"
+            value={activity.title}
           />
-          :
-          <TouchableOpacity
-            onPress={choosePhotoFromLibrary}
-            style={{ width: "96%", height: 50, marginLeft: 5, alignContent: "center", alignItems: "center" }}
-          >
-            <View style={{ marginTop: 10, flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
-              <Icon
-                style={{ marginRight: 15 }}
-                name='images'
-                type='entypo'
-                color='black'
-                onPress={choosePhotoFromLibrary} />
-              <Text style={{ marginLeft: 10 }}>Adaugă poze</Text>
-            </View>
-          </TouchableOpacity>
-        }
-        <ImageView
-          images={activity.images}
-          refresh={refresh}
-          imageIndex={currentImageIndex}
-          presentationStyle="overFullScreen"
-          visible={isImageViewerVisible}
-          onRequestClose={() => setImageViewerVisible(false)}
-          onLongPress={onLongPress}
-          FooterComponent={({ imageIndex }) => (
-            <ImageFooter imageIndex={imageIndex} imagesCount={activity.images.length} ></ImageFooter>
-          )}
-        />
-      </View>
-      <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start", marginTop: 10 }}>
-        <Icon
-          name='calendar'
-          type='font-awesome'
-          color='black'
-          onPress={showDatePicker} />
-        <Text style={{ marginLeft: 10 }} onPress={showDatePicker}>{activity.date.toDateString()}</Text>
+        </View>
+        {/* <PickerSelect
+          onValueChange={(value) => setActivity({ ...activity, categoryId: value })}
+          placeholder={{ label: "Selectează o categorie", value: null }}
+          value={activity.categoryId}
+          style={pickerSelectStyles}
+          items={items}
+        /> */}
+        <View style={{
+          backgroundColor: "white", width: windowWidth * 85 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+          flexDirection: "row", alignItems: "center", alignContent: "flex-start"
+        }}>
+          <Text style={{ fontWeight: "bold" }}>*Descriere </Text>
+          <TextInputRN style={{ width: windowWidth * 60 / 100 }}
+            onChangeText={description => setActivity({ ...activity, description: description })}
+            multiline
+            placeholder={"Am schimbat și filtrele.\nManopera 200 lei\nTrebuie schimbat și ..."}
+            value={activity.description}
+          />
+        </View>
+        <View style={{ width: '96%', marginTop: 10, flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
+          {activity.images.length > 0 ?
+            <Icon size={25} name='plus-circle-outline' color="black" onPress={choosePhotoFromLibrary} style={{ marginRight: 5 }} />
+            : null}
+          {activity.images.length > 0 ?
+            <ImageList
+              refresh={refresh}
+              images={activity.images.map((image) => image.uri)}
+              imageIndex={currentImageIndex}
+              onPress={(index) => onSelect(activity.images, index)}
+              shift={0.25}
+            />
+            :
+            <TouchableOpacity
+              onPress={choosePhotoFromLibrary}
+              style={{ width: "96%", height: 50, marginLeft: 5, alignContent: "center", alignItems: "center" }}
+            >
+              <View style={{ marginTop: 10, flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
+                  <Icon size={25} name='image' color="black" onPress={choosePhotoFromLibrary} style={{ marginRight: 5 }} />
+                <Text style={{ marginLeft: 10 }}>Adaugă poze</Text>
+              </View>
+            </TouchableOpacity>
+          }
+          <ImageView
+            images={activity.images}
+            refresh={refresh}
+            imageIndex={currentImageIndex}
+            presentationStyle="overFullScreen"
+            visible={isImageViewerVisible}
+            onRequestClose={() => setImageViewerVisible(false)}
+            onLongPress={onLongPress}
+            FooterComponent={({ imageIndex }) => (
+              <ImageFooter imageIndex={imageIndex} imagesCount={activity.images.length} ></ImageFooter>
+            )}
+          />
+        </View>
+        <TouchableOpacity onPress={showDatePicker}>
+          <View style={{
+            backgroundColor: "white", width: windowWidth * 85 / 100, paddingLeft: 15, paddingRight: 10, borderRadius: 20,
+            flexDirection: "row", alignItems: "center", alignContent: "flex-start"
+          }}>
+            <Text style={{ fontWeight: "bold", marginRight: 10 }} onPress={showDatePicker}>*Data</Text>
+            <Text style={{ paddingTop: 15, paddingBottom: 15 }} onPress={showDatePicker}>{formatDate(activity.date)}</Text>
+          </View>
+        </TouchableOpacity>
         <DateTimePicker
           isVisible={isDatePickerVisible}
           mode="date"
           onConfirm={handleDatePicked}
           onCancel={hideDatePicker}
         />
-      </View>
-      <View style={{ width: '96%', marginTop: 10, flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
-        <TextInput
-          label="Număr km"
-          value={activity.km}
-          keyboardType='numeric'
-          mode="outlined"
-          onChangeText={km => setActivity({ ...activity, km: km })}
-          maxLength={7}
-          theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-          style={{ width: '65%', marginTop: 10, marginRight: '3%' }}
-        />
-        <TextInput
-          label="Cost"
-          value={activity.price}
-          keyboardType='numeric'
-          mode="outlined"
-          onChangeText={price => setActivity({ ...activity, price: price })}
-          maxLength={7}
-          theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
-          style={{ width: '32%', marginTop: 10 }}
-        />
-      </View>
-      <Button style={{ marginTop: 10, width: 130 }} mode="contained" color="black" onPress={() => saveActivity()}>Salvează</Button>
-    </View >
-
+        <View style={{ flexDirection: "row", alignItems: "center", alignContent: 'center', justifyContent: 'center' }}>
+          <View style={{
+            backgroundColor: "white", width: windowWidth * 55 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+            flexDirection: "row", alignItems: "center", alignContent: "flex-start", marginRight: windowWidth * 3 / 100
+          }}>
+            <Text style={{ fontWeight: "bold" }}>*Km </Text>
+            <TextInputRN
+              onChangeText={km => setActivity({ ...activity, km: km })}
+              keyboardType="numeric"
+              placeholder="120 356"
+              value={activity.km}
+            />
+          </View>
+          <View style={{ marginTop: 20, alignContent: 'center', alignItems: 'center', justifyContent: 'center' }}>
+            <Text>Actualizează km</Text>
+            <Switch
+              style={{}}
+              trackColor={{ false: "#767577", true: "#767577" }}
+              thumbColor={updateKm ? "#f54b63" : "#f4f3f4"}
+              ios_backgroundColor="#3e3e3e"
+              onValueChange={() => setUpdateKm(!updateKm)}
+              value={updateKm}
+            />
+          </View>
+        </View>
+        <View style={{
+          backgroundColor: "white", width: windowWidth * 85 / 100, paddingLeft: 15, paddingRight: 10, marginTop: 20, borderRadius: 20,
+          flexDirection: "row", alignItems: "center", alignContent: "flex-start"
+        }}>
+          <Text style={{ fontWeight: "bold" }}>Cost </Text>
+          <TextInputRN
+            onChangeText={cost => setActivity({ ...activity, cost: cost })}
+            keyboardType="numeric"
+            placeholder="300 lei"
+            value={activity.cost}
+          />
+        </View>
+        <Button style={{ width: 300, marginBottom: 20, marginTop: 30, marginRight: '2%', borderRadius: 50 }} mode="contained" color="black"
+          onPress={() => saveActivity()}
+        >Salvează</Button>
+      </View >
+    </ScrollView>
   );
 };
 
@@ -278,7 +296,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    marginTop: 10
   },
 });
 

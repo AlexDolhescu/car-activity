@@ -88,6 +88,7 @@ const ServiceIntervalScreen = ({ route, navigation }) => {
                     value={car.kmIntervalService}
                     mode="outlined"
                     multiline
+                    keyboardType="numeric"
                     onChangeText={km => { setCar({ ...car, kmIntervalService: km }) }}
                     theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
                     style={{ width: '60%', marginTop: 10 }}
@@ -97,6 +98,7 @@ const ServiceIntervalScreen = ({ route, navigation }) => {
                     value={car.daysIntervalService}
                     mode="outlined"
                     multiline
+                    keyboardType="numeric"
                     onChangeText={days => { setCar({ ...car, daysIntervalService: days }) }}
                     theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
                     style={{ width: '60%', marginTop: 10 }}

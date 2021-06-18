@@ -30,14 +30,13 @@ const ManageBrandStack = createStackNavigator();
 const ManageCategoryStack = createStackNavigator();
 
 const AppStack = ({ navigation }) => (
-
-  <Drawer.Navigator drawerPosition="right" drawerContent={props => <DrawerContent {...props} />}>
-    <Drawer.Screen name="HomeDrawer" component={MainTabScreen} />
-    <Drawer.Screen name="SupportScreen" component={SupportStackScreen} />
-    <Drawer.Screen name="ManageModelScreen" component={ManageModelStackScreen} />
-    <Drawer.Screen name="ManageBrandScreen" component={ManageBrandStackScreen} />
-    <Drawer.Screen name="ManageCategoryScreen" component={ManageCategoryStackScreen} />
-  </Drawer.Navigator>
+    <Drawer.Navigator drawerPosition="right" drawerContent={props => <DrawerContent {...props} />}>
+      <Drawer.Screen name="HomeDrawer" component={MainTabScreen} />
+      <Drawer.Screen name="SupportScreen" component={SupportStackScreen} />
+      <Drawer.Screen name="ManageModelScreen" component={ManageModelStackScreen} />
+      <Drawer.Screen name="ManageBrandScreen" component={ManageBrandStackScreen} />
+      <Drawer.Screen name="ManageCategoryScreen" component={ManageCategoryStackScreen} />
+    </Drawer.Navigator>
 
 );
 
