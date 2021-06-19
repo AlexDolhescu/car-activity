@@ -18,6 +18,7 @@ const HomeScreen = ({ navigation }) => {
   const [selectedCarId, setSelectedCarId] = useState(null);
   const [carsToUser, setCarsToUser] = useState([]);
   const [refreshCarousel, setRefreshCarousel] = useState(false);
+  const [petrolInfo, setPetrolInfo] = useState({});
 
   React.useEffect(() => {
     void async function fetchData() {
@@ -33,9 +34,15 @@ const HomeScreen = ({ navigation }) => {
   // );
 
 
-  const changeCar = (index) => {
+  const changeCar = async (index) => {
     setActiveIndex(index);
     setCarInformations(carsToUser[index].car);
+    await firestore().collection('carUser').doc(carsToUser[index].doc.id).update({ isSelected: true });
+    carsToUser.forEach(async (carUser) => {
+      if(carUser.doc.id != carsToUser[index].doc.id) {
+        await firestore().collection('carUser').doc(carUser.doc.id).update({ isSelected: false });
+      }
+    })
     //save carUser cu is selected si celelate cu false :)
   }
 
@@ -114,45 +121,33 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
-  /**
-   * returneaza sursa imaginii modelului masinii daca exista, altfel sursa brandului masinii
-   * @param {*} modelId 
-   * @param {*} brandId 
-   */
-  const getCarLogoByCarId = (modelId, brandId) => {
+  const setCarInformations = (car) => {
+    setSelectedCarId(car.id);
+    getPetrolData(car.id);
+    setCarInfo(car.data());
+  }
+
+  const getPetrolData = (carId) => {
     return new Promise((resolve, reject) => {
       firestore()
-        .collection('model')
-        .doc(modelId)
+        .collection('petrol')
+        .where("carId", "==", carId)
         .get()
-        .then((model) => {
-          if (model.image != null) {
-            resolve(model.image);
-          }
+        .then(async (querySnapshot) => {
+          let chartData = querySnapshot.docs.map(doc => doc.data())
+          let filteredPetrols = chartData.filter(petrol => Moment(petrol.date) >= Moment(new Date()).subtract(1, 'months'));
+          let cost = 0;
+          for (const petrol of filteredPetrols) {
+            cost += Number(petrol.cost);
+          };
+          setPetrolInfo({numberOfRefils: chartData.length, cost: cost})
+          resolve();
         })
         .catch((error) => {
-          console.log('Something went wrong with find model to firestore.', error);
-        });
-      firestore()
-        .collection('brand')
-        .doc(brandId)
-        .get()
-        .then((brand) => {
-          resolve(brand.image);
-        })
-        .catch((error) => {
-          console.log('Something went wrong with find brand to firestore.', error);
+          console.log('Something went wrong with find petrols to firestore.', error);
         });
     });
   };
-
-  const setCarInformations = (car) => {
-    // TODO de luat toate alertele - date despre plin, costuri, etc
-    // car.id -> uid
-    // car.data() obiectul cu datele
-    setSelectedCarId(car.id);
-    setCarInfo(car.data());
-  }
 
   /**
    * Moment() -> now
@@ -164,7 +159,7 @@ const HomeScreen = ({ navigation }) => {
     if (date == null) {
       return "black";
     }
-    if (Moment(date).isAfter(Moment()) == true) {
+    if (Moment(new Date(date)).isAfter(Moment(new Date())) == true) {
       return "green";
     }
     return "red";
@@ -174,11 +169,7 @@ const HomeScreen = ({ navigation }) => {
     if (date == null) {
       return;
     }
-    return Moment(date).format("DD/MM/YYYY");
-  }
-
-  const getNumberOfDays = (date) => {
-    return Moment(date).diff(Moment(), 'days');
+    return Moment(new Date(date)).format("DD/MM/YYYY");
   }
 
   const deleteCarUserById = (carUserId) => {
@@ -264,6 +255,10 @@ const HomeScreen = ({ navigation }) => {
     return false;
   }
 
+  const getNumberOfDays = (date) => {
+    return Moment(new Date(date)).diff(Moment(new Date()), 'days').toString();
+  }
+
   const _renderItem = ({ item, index }) => {
     return (
       <View style={styles.slide}>
@@ -335,7 +330,7 @@ const HomeScreen = ({ navigation }) => {
                 marginRight: 5,
                 justifyContent: 'center', alignItems: 'center',
               }} >
-                <Text style={{ fontWeight: 'bold' }}>1 </Text>
+                <Text style={{ fontWeight: 'bold' }}>{petrolInfo.numberOfRefils} </Text>
               </View>
               <Text style={{ textAlign: 'center' }}>Plinuri carburant în ultimele 30 de zile</Text>
             </View>
@@ -346,7 +341,7 @@ const HomeScreen = ({ navigation }) => {
                 justifyContent: 'center', alignItems: 'center'
               }} >
                 <View>
-                  <Text style={{ fontWeight: 'bold', marginTop: 5 }}>900</Text>
+                  <Text style={{ fontWeight: 'bold', marginTop: 5 }}>{petrolInfo.cost}</Text>
                   <Text style={{ opacity: 0.4, marginTop: -5, textAlign: 'center' }}>lei</Text>
                 </View>
               </View>
@@ -396,7 +391,7 @@ const HomeScreen = ({ navigation }) => {
                 <Text>(km)</Text>
               </View>
               <View style={{ width: '20%', marginRight: '25%', textAlign: 'center', alignSelf: 'center', alignItems: 'center' }}>
-                <Text style={{ fontWeight: 'bold' }}>{carInfo.daysToService ? carInfo.daysToService : '-'}</Text>
+                <Text style={{ fontWeight: 'bold' }}>{carInfo.daysToService ? getNumberOfDays(carInfo.daysToService) : '-'}</Text>
                 <Text>(zile)</Text>
               </View>
             </View>

@@ -10,7 +10,7 @@ import ImageFooter from "../utils/ImageFooter";
 
 const CarGalleryScreen = ({ route, navigation }) => {
 
-    const { carId } = route.params;
+    const { carId, onlyView } = route.params;
 
     const [photos, setPhotos] = useState([]);
     const [refresh, setRefresh] = useState(false);
@@ -31,7 +31,6 @@ const CarGalleryScreen = ({ route, navigation }) => {
             let photos = [];
             res.items.forEach((itemRef) => {
                 itemRef.getDownloadURL().then(function (url) {
-                    console.log(url)
                     photos.push({ uri: url });
                     setPhotos(photos);
                     setRefresh(!refresh);
@@ -65,9 +64,6 @@ const CarGalleryScreen = ({ route, navigation }) => {
     };
 
     const savePhotos = () => {
-        // todo - nu salveaza pozele
-        console.log("--------------")
-        console.log(photos.length)
         photos.forEach(img => {
             // TODO de facut in utils filename
             let filename = img.uri.substring(img.uri.lastIndexOf('/') + 1);
@@ -94,6 +90,9 @@ const CarGalleryScreen = ({ route, navigation }) => {
     }
 
     const onLongPress = (image) => {
+        if (onlyView == true) {
+            return;
+        }
         Alert.alert(
             "Delete image",
             "Are you sure that you want to delete this image?",
@@ -160,9 +159,11 @@ const CarGalleryScreen = ({ route, navigation }) => {
                         <Text h5 style={{ color: 'gray', textAlign: "center" }}>- nu sunt poze încarcate -</Text>
                     </View>
                 }
-                <Button style={{ width: 300, marginBottom: 20, marginTop: 20, marginRight: '2%', borderRadius: 50 }} mode="contained" color="black"
-                    onPress={() => choosePhotoFromLibrary()}
-                >Adaugă o poze</Button>
+                {onlyView != true ?
+                    <Button style={{ width: 300, marginBottom: 20, marginTop: 20, marginRight: '2%', borderRadius: 50 }} mode="contained" color="black"
+                        onPress={() => choosePhotoFromLibrary()}
+                    >Adaugă o poze</Button>
+                    : null}
             </View>
         </ScrollView>
     );

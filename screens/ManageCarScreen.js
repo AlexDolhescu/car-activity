@@ -1,12 +1,13 @@
 import React, { useState, useContext } from 'react';
 import { View, Alert, StyleSheet, ScrollView, Image, TextInput as TextInputRN, Switch } from 'react-native';
-import { Button, Checkbox } from 'react-native-paper';
-import { Card, Text } from 'react-native-elements'
+import { Button} from 'react-native-paper';
+import { Text } from 'react-native-elements'
 import { AuthContext } from '../navigation/AuthProvider';
 import firestore from '@react-native-firebase/firestore';
 import { TouchableOpacity } from 'react-native';
 import { windowWidth, windowHeight } from "../utils/Dimensions";
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Moment from 'moment';
 
 const ManageCarScreen = ({ route, navigation }) => {
 
@@ -22,8 +23,6 @@ const ManageCarScreen = ({ route, navigation }) => {
   const [brands, setBrands] = useState([]);
   const [models, setModels] = useState([]);
   const [listItems, setListItems] = useState([]);
-  const [serviceInterval, setServiceInterval] = useState(true);
-  const [refreshServiceInterval, setRefreshServiceInterval] = useState(false);
 
   React.useEffect(() => {
     void async function fetchData() {
@@ -79,12 +78,6 @@ const ManageCarScreen = ({ route, navigation }) => {
     });
   };
 
-  const serviceIntervalPress = () => {
-    setServiceInterval(!serviceInterval);
-    setCar({ ...car, kmToService: null, daysToService: null, kmIntervalService: null, daysIntervalService: null });
-    setRefreshServiceInterval(!refreshServiceInterval);
-  }
-
   const showPublicCar = () => {
     if (car.showGeneralData && car.showGallery && car.showActivities) {
       return 'checked';
@@ -126,7 +119,7 @@ const ManageCarScreen = ({ route, navigation }) => {
         kw: car.kw,
         hoursePower: car.hoursePower,
         kmToService: car.kmToService,
-        daysToService: car.daysToService,
+        daysToService: Moment(new Date()).add(Number(car.daysToService), 'days').toString(),
         kmIntervalService: car.kmIntervalService,
         daysIntervalService: car.daysIntervalService,
         showGeneralData: car.showGeneralData,
@@ -169,7 +162,7 @@ const ManageCarScreen = ({ route, navigation }) => {
         kw: car.kw,
         hoursePower: car.hoursePower,
         kmToService: car.kmToService,
-        daysToService: car.daysToService,
+        daysToService: Moment(new Date()).add(Number(car.daysToService), 'days').toString(),
         kmIntervalService: car.kmIntervalService,
         daysIntervalService: car.daysIntervalService,
         showGeneralData: car.showGeneralData,
@@ -262,6 +255,10 @@ const ManageCarScreen = ({ route, navigation }) => {
       return;
     }
     setCar({ ...car, modelId: item.id })
+  }
+
+  const getNumberOfDays = (date) => {
+    return Moment(new Date(date)).diff(Moment(new Date()), 'days').toString();
   }
 
   return (
@@ -421,7 +418,7 @@ const ManageCarScreen = ({ route, navigation }) => {
                 placeholder="280 zile"
                 keyboardType="numeric"
                 maxLength={3}
-                value={car.daysToService}
+                value={getNumberOfDays(car.daysToService)}
               />
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>

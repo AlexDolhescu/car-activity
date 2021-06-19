@@ -1,11 +1,10 @@
 import React, { useState, useContext } from 'react';
-import { View, Alert, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { TextInput, Button, Checkbox, Avatar } from 'react-native-paper';
-import { Card, Icon, Text, ListItem } from 'react-native-elements'
-import TouchableScale from 'react-native-touchable-scale';
+import { View, Alert, StyleSheet, ScrollView} from 'react-native';
+import { TextInput, Button } from 'react-native-paper';
+import { Text } from 'react-native-elements'
 import { AuthContext } from '../navigation/AuthProvider';
 import firestore from '@react-native-firebase/firestore';
-import ActionButton from 'react-native-action-button';
+import Moment from 'moment';
 
 const ServiceIntervalScreen = ({ route, navigation }) => {
 
@@ -56,11 +55,15 @@ const ServiceIntervalScreen = ({ route, navigation }) => {
             ]
         );
     }
+    
+      const getNumberOfDays = (date) => {
+        return Moment(new Date(date)).diff(Moment(new Date()), 'days');
+      }
 
     const resetServiceInterval = async () => {
         await firestore().collection('car').doc(carId).update(
             {
-                daysToService: car.daysIntervalService,
+                daysToService: Moment(new Date()).add(Number(car.daysIntervalService), 'days').toString(),
                 kmToService: car.kmIntervalService,
                 daysIntervalService: car.daysIntervalService,
                 kmIntervalService: car.kmIntervalService
@@ -79,7 +82,7 @@ const ServiceIntervalScreen = ({ route, navigation }) => {
                         <Text style={{ fontSize: 16 }}>km</Text>
                     </View>
                     <View style={{ width: '40%', alignContent: "center", alignItems: "center" }}>
-                        <Text style={{ fontSize: 24, fontWeight: "500" }}>{car.daysToService}</Text>
+                        <Text style={{ fontSize: 24, fontWeight: "500" }}>{getNumberOfDays(car.daysToService)}</Text>
                         <Text style={{ fontSize: 16 }}>zile</Text>
                     </View>
                 </View>

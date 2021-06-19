@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Alert, StyleSheet, ScrollView } from 'react-native';
+import { View, Alert, StyleSheet, ScrollView, Image } from 'react-native';
 import { TextInput, Title, Button } from 'react-native-paper';
 import { Icon, Text, Card } from 'react-native-elements'
 import firestore from '@react-native-firebase/firestore';
@@ -13,6 +13,7 @@ const SearchScreen = ({ navigation }) => {
   const [carExists, setCarExists] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const [carSearchButtonPressed, setCarSearchButtonPressed] = useState(false);
+  const [carInformations, setCarInformations] = useState({});
 
   useFocusEffect(
     React.useCallback(() => {
@@ -34,8 +35,13 @@ const SearchScreen = ({ navigation }) => {
       .where("vin", "==", vin)
       .get()
       .then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
+        querySnapshot.forEach(async (doc) => {
+          // doar unu
           setCarInfo(doc.data());
+          let model = await getModelById(doc.data().modelId);
+          let brand = await getBrandById(doc.data().brandId);
+          let carToPush = { doc, model, brand };
+          setCarInformations(carToPush);
           setCarExists(true);
         });
       })
@@ -43,6 +49,36 @@ const SearchScreen = ({ navigation }) => {
         console.log('Something went wrong with find car to firestore.', error);
       });
   }
+
+  const getModelById = (modelId) => {
+    return new Promise((resolve, reject) => {
+      firestore()
+        .collection('model')
+        .doc(modelId)
+        .get()
+        .then((model) => {
+          resolve(model.data());
+        })
+        .catch((error) => {
+          console.log('Something went wrong with find model to firestore.', error);
+        });
+    });
+  };
+
+  const getBrandById = (brandId) => {
+    return new Promise((resolve, reject) => {
+      firestore()
+        .collection('brand')
+        .doc(brandId)
+        .get()
+        .then((brand) => {
+          resolve(brand.data());
+        })
+        .catch((error) => {
+          console.log('Something went wrong with find brand to firestore.', error);
+        });
+    });
+  };
 
   return (
     <ScrollView>
@@ -63,7 +99,7 @@ const SearchScreen = ({ navigation }) => {
             theme={{ colors: { primary: 'black', underlineColor: 'transparent', } }}
             style={{ width: '81%', marginTop: 10, marginRight: '2%' }}
           />
-          <View style={{ marginTop: 10 }}>
+          <View style={{ marginTop: 15 }}>
             <Icon
               name='search'
               type='font-awesome-5'
@@ -78,19 +114,31 @@ const SearchScreen = ({ navigation }) => {
             {carInfo.showGeneralData ?
               <Card >
                 <Card.Title>DATE MAȘINĂ</Card.Title>
-                <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start", marginTop: 10 }}>
-                  <View style={{ width: '48%', marginLeft: '4%' }}>
-                    <Text>Marcă: {carInfo.brandId}</Text>
-                    <Text>Model: {carInfo.modelId}</Text>
-                    <Text>An: {carInfo.fabricationYear}</Text>
+                {/* TODO - icon + model + brand + licence palte */}
+                <View style={{ alignItems: "center" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginTop: 10, marginLeft: 5 }}>
+                    <Image source={{ uri: carInformations.model.image != undefined ? carInformations.model.image : carInformations.brand.image }}
+                      style={{ width: 25, height: 25, marginRight: 10, marginLeft: 5 }}></Image>
+                    <Text h4>{carInformations.brand.name + " " + carInformations.model.name}</Text>
                   </View>
-                  <View style={{ width: '44%' }}>
-                    <Text>Km: {carInfo.km}</Text>
-                    <Text>Culoare: {carInfo.color}</Text>
-                    <Text>CP: {carInfo.hoursePower}</Text>
-                    <Text>Motor: {carInfo.cilindricalCapacity} cm3</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginLeft: 5 }}>
+                    <Text style={{
+                      marginTop: 5, borderColor: "black", borderRadius: 10, fontWeight: "bold",
+                      borderWidth: 2, paddingLeft: 10, paddingRight: 5, paddingTop: 2
+                    }}>{carInformations.doc.data().licencePlate}</Text>
                   </View>
                 </View>
+                <View style={{ flexDirection: "row", alignItems: "flex-start", alignContent: "flex-start", marginTop: 10 }}>
+                  <View style={{ width: '48%', marginLeft: '4%' }}>
+                    <Text>An: {carInfo.fabricationYear != undefined ? carInfo.fabricationYear : "-"}</Text>
+                    <Text>Kw: {carInfo.kw != undefined ? carInfo.kw : "-"}</Text>
+                  </View>
+                  <View style={{ width: '44%' }}>
+                    <Text>Km: {carInfo.km != undefined ? carInfo.km : "-"}</Text>
+                    <Text>CP: {carInfo.hoursePower != undefined ? carInfo.hoursePower : "-"}</Text>
+                  </View>
+                </View>
+                <Text style={{ marginLeft: '4%' }}>Capacitate cilindrica: {carInfo.cilindricalCapacity ? carInfo.cilindricalCapacity + ' cm3' : "-"}</Text>
               </Card>
               :
               <View>
@@ -102,13 +150,13 @@ const SearchScreen = ({ navigation }) => {
                 <Text style={{ fontWeight: 'bold' }}>Proprietarul nu are datele mașinii publice</Text>
               </View>
             }
-            <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", alignSelf: 'center', marginTop: 10 }}>
-              <Button style={{ width: 130, marginBottom: 20, marginRight: 20 }} mode="contained" color="black"
-                // onPress={navigation.navigate("GalleryScreen")}
+            <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", alignSelf: 'center', marginTop: 20 }}>
+              <Button style={{ width: 130, marginBottom: 20, marginRight: 20, borderRadius: 20 }} mode="contained" color="black"
+                onPress={() => navigation.navigate("CarGalleryScreen", { carId: carInformations.doc.id, onlyView: true })}
                 disabled={!carInfo.showGallery}
               >Galierie</Button>
-              <Button style={{ width: 130, marginBottom: 20 }} mode="contained" color="black"
-                // onPress={navigation.navigate("ActivityScreen")}
+              <Button style={{ width: 130, marginBottom: 20, borderRadius: 20 }} mode="contained" color="black"
+                onPress={() => navigation.navigate("ViewActivityScreen", { carId: carInformations.doc.id, onlyView: true })}
                 disabled={!carInfo.showActivities}
               >Activități</Button>
             </View>

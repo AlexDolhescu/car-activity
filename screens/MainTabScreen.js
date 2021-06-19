@@ -18,6 +18,7 @@ import CarAlertsScreen from './CarAlertsScreen';
 import MileageUpdateScreen from './MileageUpdateScreen';
 import PetrolScreen from './PetrolScreen';
 import ManagePetrolScreen from './ManagePetrolScreen';
+import ViewActivityScreen from './ViewActivityScreen';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -72,6 +73,7 @@ const MainTabScreen = () => (
       name="CarActivity"
       component={ActivityStackScreen}
       options={{
+
         tabBarLabel: ({ focused, tintColor: color }) => (
           focused ?
             <View style={{ justifyContent: "center", alignItems: "center", width: 60, marginBottom: 5 }}>
@@ -153,7 +155,9 @@ const HomeStackScreen = ({ navigation }) => (
 );
 
 const SearchStackScreen = ({ navigation }) => (
-  <SearchStack.Navigator screenOptions={{
+  <SearchStack.Navigator 
+  initialRouteName="SearchScreen" // NOT WORKING
+  screenOptions={{
     headerStyle: {
       backgroundColor: '#000000'
     },
@@ -172,6 +176,12 @@ const SearchStackScreen = ({ navigation }) => (
           <Icon size={25} name='menu' color="white" onPress={() => navigation.toggleDrawer()} style={{ marginRight: 5 }} />
         </TouchableOpacity>
       )
+    }} />
+    <SearchStack.Screen name="CarGalleryScreen" component={CarGalleryScreen} options={{
+      title: 'Galerie masină'
+    }} />
+        <SearchStack.Screen name="ViewActivityScreen" component={ViewActivityScreen} options={{
+      title: 'Activități masină'
     }} />
   </SearchStack.Navigator>
 );

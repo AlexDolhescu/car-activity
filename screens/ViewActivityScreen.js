@@ -11,7 +11,9 @@ import Moment from 'moment'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { windowWidth, windowHeight } from "../utils/Dimensions";
 
-const ActivityScreen = ({ navigation }) => {
+const ViewActivityScreen = ({ route, navigation }) => {
+
+  const { carId, onlyView } = route.params;
 
   const { user, logout } = useContext(AuthContext);
   const [carInformations, setCarInformations] = useState({});
@@ -53,27 +55,13 @@ const ActivityScreen = ({ navigation }) => {
       })
   }
 
-  const loadActivities = () => {
-    firestore()
-      .collection('carUser')
-      .where("userId", "==", user.uid)
-      .where("isSelected", '==', true)
-      .get()
-      .then(async (querySnapshot) => {
-        let chartData = querySnapshot.docs.map(doc => doc);
-        // doar 1 in teorie
-        for (const doc of chartData) {
-          let car = await getCarById(doc.data().carId);
-          let model = await getModelById(car.data().modelId);
-          let brand = await getBrandById(car.data().brandId);
-          let carToPush = { doc, car, model, brand };
-          await getCarActivities(car.id);
-          setCarInformations(carToPush);
-        };
-      })
-      .catch((error) => {
-        console.log('Something went wrong with find carUser to firestore.', error);
-      });
+  const loadActivities = async () => {
+    let car = await getCarById(carId);
+    let model = await getModelById(car.data().modelId);
+    let brand = await getBrandById(car.data().brandId);
+    let carToPush = { car, model, brand };
+    await getCarActivities(car.id);
+    setCarInformations(carToPush);
   };
 
   const loadCategories = () => {
@@ -233,7 +221,7 @@ const ActivityScreen = ({ navigation }) => {
   return (
     <View style={styles.container} refresh={refresh}>
       <View style={{ flex: 1, width: '100%' }}>
-        {carInformations.brand != undefined ? 
+        {carInformations.brand != undefined ?
           <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", justifyContent: "space-between", }}>
             <View>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginTop: 10, marginLeft: 5 }}>
@@ -242,12 +230,12 @@ const ActivityScreen = ({ navigation }) => {
                 <Text h4>{carInformations.brand.name + " " + carInformations.model.name}</Text>
               </View>
               <TouchableOpacity onPress={() => loadApiData()}>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginLeft: 5 }}>
-                <Text style={{
-                  marginTop: 5, borderColor: "black", borderRadius: 10, fontWeight: "bold",
-                  borderWidth: 2, paddingLeft: 10, paddingRight: 5, paddingTop: 2
-                }}>{carInformations.car.data().licencePlate}</Text>
-              </View>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginLeft: 5 }}>
+                  <Text style={{
+                    marginTop: 5, borderColor: "black", borderRadius: 10, fontWeight: "bold",
+                    borderWidth: 2, paddingLeft: 10, paddingRight: 5, paddingTop: 2
+                  }}>{carInformations.car.data().licencePlate}</Text>
+                </View>
               </TouchableOpacity>
             </View>
             <View style={{ marginRight: 10, alignItems: "flex-end", justifyContent: "flex-start" }}>
@@ -266,8 +254,7 @@ const ActivityScreen = ({ navigation }) => {
               <ListItem bottomDivider key={activity.id} style={{ width: '100%' }}
                 Component={TouchableScale}
                 friction={95} //
-                tension={100} 
-                onPress={() => navigation.navigate("ManageActivityScreen", { activityId: activity.id })}
+                tension={100}
                 activeScale={0.95} >
                 <Avatar source={{ uri: activity.categoryImage }} />
                 <ListItem.Content>
@@ -403,17 +390,12 @@ const ActivityScreen = ({ navigation }) => {
           : null}
 
       </View>
-
-      <ActionButton
-        buttonColor="black"
-        onPress={() => navigation.navigate("ManageActivityScreen", { carId: carInformations.car.id })}
-      />
     </View>
 
   );
 };
 
-export default ActivityScreen;
+export default ViewActivityScreen;
 
 
 

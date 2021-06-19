@@ -142,9 +142,9 @@ const PetrolScreen = ({ navigation }) => {
     setTimePeriod({ ...item });
     let filteredPetrols = [...petrols];
     if (item.id == 1) {
-      filteredPetrols = filteredPetrols.filter(petrol => Moment(petrol.date) >= Moment().subtract(1, 'months'));
+      filteredPetrols = filteredPetrols.filter(petrol => Moment(petrol.date) >= Moment(new Date()).subtract(1, 'months'));
     } else if (item.id == 2) {
-      filteredPetrols = filteredPetrols.filter(petrol => Moment(petrol.date) >= Moment().subtract(1, 'years'));
+      filteredPetrols = filteredPetrols.filter(petrol => Moment(petrol.date) >= Moment(new Date()).subtract(1, 'years'));
     }
     setPetrols(filteredPetrols);
     setShowFilter(!showFilter);
