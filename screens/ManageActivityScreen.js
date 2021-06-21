@@ -154,7 +154,10 @@ const ManageActivityScreen = ({ route, navigation }) => {
       })
       setActivity({ ...activity, images: existingImages });
       setRefresh(!refresh);
-    });
+    })
+    .catch((err) => {
+      console.log(err);
+    })
   };
 
   const saveActivity = () => {

@@ -21,7 +21,6 @@ const CarUsersScreen = ({ route, navigation }) => {
     const [addPersonButton, setAddPersonButton] = useState(false);
     const [carUsers, setCarUsers] = useState([]);
 
-
     React.useEffect(() => {
         void async function fetchData() {
             loadUsers();
@@ -136,11 +135,13 @@ const CarUsersScreen = ({ route, navigation }) => {
                 return;
             }
         }
+        await updateAllSelectedCarUser(searchUser.id);
         firestore()
             .collection('carUser')
             .add({
                 carId: carId,
                 userId: searchUser.id,
+                isSelected: true,
             })
             .then((carUserSaved) => {
                 let existingUsers = [...users];
@@ -158,6 +159,26 @@ const CarUsersScreen = ({ route, navigation }) => {
                 console.log('Something went wrong with added carUser to firestore.', error);
             });
     };
+
+    const updateAllSelectedCarUser = (userId) => {
+        return new Promise((resolve, reject) => {
+        firestore()
+          .collection('carUser')
+          .where("userId", "==", userId)
+          .where("isSelected", "==", true)
+          .get()
+          .then(async (querySnapshot) => {
+            let chartData = querySnapshot.docs.map(doc => doc)
+            for (const doc of chartData) {
+              await firestore().collection('carUser').doc(doc.id).update({ isSelected: false });
+            };
+            resolve();
+          })
+          .catch((error) => {
+            console.log('Something went wrong with find carUser to firestore.', error);
+          });
+        });
+      };
 
     const deleteUser = async () => {
         let userEmail = selectedPersonEmail;
@@ -238,6 +259,9 @@ const CarUsersScreen = ({ route, navigation }) => {
     }
 
     const selectPerson = (l) => {
+        if (l.email == administratorEmail) {
+            return;
+        }
         if (l.email == selectedPersonEmail) {
             setSelectedPersonEmail(null);
             return;
@@ -301,8 +325,7 @@ const CarUsersScreen = ({ route, navigation }) => {
                     :
                     <View style={{ marginTop: 20 }}>
                         <Icon
-                            name='slash'
-                            type='feather'
+                            name='cancel'
                             color='gray'
                             size={100} />
                         <Text h5 style={{ color: 'gray', textAlign: "center" }}>- nu sunt există utilizatori -</Text>

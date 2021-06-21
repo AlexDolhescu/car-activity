@@ -1,17 +1,11 @@
-import React, { useState, useContext } from 'react';
-import { View, Alert, Text, StyleSheet, Image, TouchableOpacity, TextInput as TextInputRN, Switch, ScrollView } from 'react-native';
-import { TextInput, Button } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, Alert, Text, StyleSheet, TouchableOpacity, TextInput as TextInputRN, ScrollView } from 'react-native';
+import { Button } from 'react-native-paper';
 import DateTimePicker from "react-native-modal-datetime-picker";
-import PickerSelect from 'react-native-picker-select';
-import ImageView from "react-native-image-viewing";
-import ImageList from "../utils/ImageList";
-import ImageFooter from "../utils/ImageFooter";
-import ImagePicker from 'react-native-image-crop-picker';
-import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
 import { windowWidth, windowHeight } from "../utils/Dimensions";
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Moment from 'moment'
+import Moment from 'moment';
 
 const ManagePetrolScreen = ({ route, navigation }) => {
 

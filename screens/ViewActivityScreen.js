@@ -388,7 +388,15 @@ const ViewActivityScreen = ({ route, navigation }) => {
             </View>
           </View>
           : null}
-
+        { activities.length == 0 ?
+          <View style={{
+            alignItems: "center", justifyContent: "center", opacity: 0.2,
+            alignContent: "center", alignSelf: "center", flex: 1
+          }}>
+            <Icon name='cancel' color='black' size={150} />
+            <Text h3 style={{ marginTop: 20 }}>Nu există activitați</Text>
+          </View>
+          : null}
       </View>
     </View>
 

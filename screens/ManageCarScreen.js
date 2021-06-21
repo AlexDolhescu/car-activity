@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { View, Alert, StyleSheet, ScrollView, Image, TextInput as TextInputRN, Switch } from 'react-native';
-import { Button} from 'react-native-paper';
+import { Button } from 'react-native-paper';
 import { Text } from 'react-native-elements'
 import { AuthContext } from '../navigation/AuthProvider';
 import firestore from '@react-native-firebase/firestore';
@@ -228,7 +228,8 @@ const ManageCarScreen = ({ route, navigation }) => {
     });
   };
 
-  const saveCarUser = (carId, userId) => {
+  const saveCarUser = async (carId, userId) => {
+    await updateAllSelectedCarUser();
     return new Promise((resolve, reject) => {
       firestore()
         .collection('carUser')
@@ -239,11 +240,32 @@ const ManageCarScreen = ({ route, navigation }) => {
           isAdmin: true
         })
         .then(() => {
+          
           resolve();
         })
         .catch((error) => {
           console.log('Something went wrong with add carUser to firestore.', error);
         });
+    });
+  };
+
+  const updateAllSelectedCarUser = () => {
+    return new Promise((resolve, reject) => {
+    firestore()
+      .collection('carUser')
+      .where("userId", "==", user.uid)
+      .where("isSelected", "==", true)
+      .get()
+      .then(async (querySnapshot) => {
+        let chartData = querySnapshot.docs.map(doc => doc)
+        for (const doc of chartData) {
+          await firestore().collection('carUser').doc(doc.id).update({ isSelected: false });
+        };
+        resolve();
+      })
+      .catch((error) => {
+        console.log('Something went wrong with find carUser to firestore.', error);
+      });
     });
   };
 
@@ -258,7 +280,11 @@ const ManageCarScreen = ({ route, navigation }) => {
   }
 
   const getNumberOfDays = (date) => {
-    return Moment(new Date(date)).diff(Moment(new Date()), 'days').toString();
+    console.log(date)
+    if (date == undefined) {
+      return "";
+    }
+    return Moment(new Date()).add(Number(date), 'days').diff(Moment(new Date()), 'days').toString();
   }
 
   return (
@@ -268,7 +294,7 @@ const ManageCarScreen = ({ route, navigation }) => {
           <Text h4 style={{ marginTop: 10, marginLeft: 10 }}>{carId == undefined ? "Alege o marcă" : "Alege un model"}</Text>
           <View style={{ justifyContent: "center", alignItems: "center" }}>
             {listItems.map(item => (
-              <TouchableOpacity onPress={() => selectItem(item)}>
+              <TouchableOpacity key={item.id} onPress={() => selectItem(item)}>
                 <View style={{
                   flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
                   width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10

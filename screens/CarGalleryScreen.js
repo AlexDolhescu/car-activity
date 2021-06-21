@@ -60,7 +60,10 @@ const CarGalleryScreen = ({ route, navigation }) => {
             savePhotos();
             setRefresh(!refresh);
 
-        });
+        })
+        .catch((err) => {
+            console.log(err);
+          })
     };
 
     const savePhotos = () => {

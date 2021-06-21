@@ -1,10 +1,9 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { View, Button, StyleSheet, Image, ScrollView, Alert, TouchableOpacity } from 'react-native';
-import ImagePicker from 'react-native-image-crop-picker';
-import storage from '@react-native-firebase/storage';
+import React, { useState, useContext } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { View, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import { AuthContext } from '../navigation/AuthProvider';
-import { FlatList, ListItem, Avatar, Text, } from 'react-native-elements'
+import { ListItem, Avatar, Text, } from 'react-native-elements'
 import TouchableScale from 'react-native-touchable-scale';
 import ActionButton from 'react-native-action-button';
 import Moment from 'moment'
@@ -25,6 +24,7 @@ const ActivityScreen = ({ navigation }) => {
   const [categories, setCategories] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const [apiActivities, setApiActivities] = useState([]);
+  const [isLoading, setIsLoaging] = useState(true);
   const [timePeriodValues] = useState([
     { id: 1, name: "Ultima lună" },
     { id: 2, name: "Ultimul an" },
@@ -37,6 +37,15 @@ const ActivityScreen = ({ navigation }) => {
       loadActivities();
     }();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setIsLoaging(true)
+      loadCategories();
+      loadActivities();
+      return () => loadActivities();
+    }, [])
+  );
 
   const loadApiData = () => {
     fetch(`https://caractivity2.free.beeceptor.com/services?vin=${encodeURIComponent("WVWZZZ1KZ03214TEST")}`, {
@@ -70,6 +79,7 @@ const ActivityScreen = ({ navigation }) => {
           await getCarActivities(car.id);
           setCarInformations(carToPush);
         };
+        setIsLoaging(false);
       })
       .catch((error) => {
         console.log('Something went wrong with find carUser to firestore.', error);
@@ -229,187 +239,249 @@ const ActivityScreen = ({ navigation }) => {
     return cost;
   }
 
+  const deletetActivityById = (activityId) => {
+    return new Promise((resolve, reject) => {
+        firestore()
+            .collection('activity')
+            .doc(activityId)
+            .delete()
+            .then(() => {
+                resolve();
+            })
+            .catch((error) => {
+                console.log('Something went wrong to delete activity to firestore.', error);
+            });
+    });
+};
+
+  const deleteActivity = async (activity) => {
+    let existingActivities = [...activities];
+    existingActivities = existingActivities.filter(activ => activ.id != activity.id)
+    await deletetActivityById(activity.id);
+    setAllActivities(existingActivities);
+    setActivities(existingActivities);
+};
+
+  const confirmDelete = (item) => {
+    Alert.alert(
+      'Confirm',
+      'Sunteți sigur că vreți să ștergeți această activitate?',
+      [
+        {
+          text: "Anulează",
+          onPress: () => { },
+          style: "cancel"
+        },
+        { text: "Șterge", onPress: () => deleteActivity(item) }
+      ]
+    );
+  }
+
 
   return (
     <View style={styles.container} refresh={refresh}>
-      <View style={{ flex: 1, width: '100%' }}>
-        {carInformations.brand != undefined ? 
-          <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", justifyContent: "space-between", }}>
-            <View>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginTop: 10, marginLeft: 5 }}>
-                <Image source={{ uri: carInformations.model.image != undefined ? carInformations.model.image : carInformations.brand.image }}
-                  style={{ width: 25, height: 25, marginRight: 10, marginLeft: 5 }}></Image>
-                <Text h4>{carInformations.brand.name + " " + carInformations.model.name}</Text>
+      {isLoading == true ?
+        <View style={{
+          backgroundColor: '#FFFFFF',
+          height: windowHeight,
+          width: windowWidth,
+          borderRadius: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-around'
+        }}>
+          <ActivityIndicator size="large" color="#0000ff"
+            animating={isLoading} />
+        </View>
+        :
+        <View style={{ flex: 1, width: '100%' }}>
+          {carInformations.brand != undefined ?
+            <View style={{ flexDirection: "row", alignItems: "center", alignContent: "center", justifyContent: "space-between", }}>
+              <View>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginTop: 10, marginLeft: 5 }}>
+                  <Image source={{ uri: carInformations.model.image != undefined ? carInformations.model.image : carInformations.brand.image }}
+                    style={{ width: 25, height: 25, marginRight: 10, marginLeft: 5 }}></Image>
+                  <Text h4>{carInformations.brand.name + " " + carInformations.model.name}</Text>
+                </View>
+                <TouchableOpacity onPress={() => loadApiData()}>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginLeft: 5 }}>
+                    <Text style={{
+                      marginTop: 5, borderColor: "black", borderRadius: 10, fontWeight: "bold",
+                      borderWidth: 2, paddingLeft: 10, paddingRight: 5, paddingTop: 2
+                    }}>{carInformations.car.data().licencePlate}</Text>
+                  </View>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={() => loadApiData()}>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginLeft: 5 }}>
-                <Text style={{
-                  marginTop: 5, borderColor: "black", borderRadius: 10, fontWeight: "bold",
-                  borderWidth: 2, paddingLeft: 10, paddingRight: 5, paddingTop: 2
-                }}>{carInformations.car.data().licencePlate}</Text>
-              </View>
-              </TouchableOpacity>
-            </View>
-            <View style={{ marginRight: 10, alignItems: "flex-end", justifyContent: "flex-start" }}>
-              <Icon size={25} name='filter-plus-outline' color="black" onPress={() => setShowFilter(!showFilter)} style={{ marginTop: 5, marginRight: 5 }} />
-              <View style={{ flexDirection: 'row', alignItems: "center" }}>
-                <Text style={{ marginTop: 10 }}>Total costuri: </Text>
-                <Text style={{ fontWeight: "bold", marginTop: 10 }}>{calculateCosts()}</Text>
-              </View>
+              <View style={{ marginRight: 10, alignItems: "flex-end", justifyContent: "flex-start" }}>
+                <Icon size={25} name='filter-plus-outline' color="black" onPress={() => setShowFilter(!showFilter)} style={{ marginTop: 5, marginRight: 5 }} />
+                <View style={{ flexDirection: 'row', alignItems: "center" }}>
+                  <Text style={{ marginTop: 10 }}>Total costuri: </Text>
+                  <Text style={{ fontWeight: "bold", marginTop: 10 }}>{calculateCosts()}</Text>
+                </View>
 
+              </View>
             </View>
-          </View>
-          : null}
-        {activities.length > 0 && showFilter == false ?
-          <ScrollView style={{ marginTop: 10 }}>
-            {activities.map(activity => (
-              <ListItem bottomDivider key={activity.id} style={{ width: '100%' }}
-                Component={TouchableScale}
-                friction={95} //
-                tension={100} 
-                onPress={() => navigation.navigate("ManageActivityScreen", { activityId: activity.id })}
-                activeScale={0.95} >
-                <Avatar source={{ uri: activity.categoryImage }} />
-                <ListItem.Content>
-                  <ListItem.Title>{activity.title}</ListItem.Title>
-                  <ListItem.Subtitle>{activity.description}</ListItem.Subtitle>
-                  <Text>{formatDate(activity.date)}</Text>
-                  {activity.cost != undefined ?
-                    <View style={{ flexDirection: "row", alignSelf: 'flex-end' }}>
-                      <Text style={{ alignSelf: 'flex-end', fontWeight: "bold" }}>{activity.cost}</Text>
-                      <Text> lei</Text>
-                    </View>
-                    : null}
-                </ListItem.Content>
-                <ListItem.Chevron size={30} />
-              </ListItem>
-            ))}
-            {apiActivities.length > 0 ?
-              <View style={{ alignItems: "center" }}>
-                {apiActivities.map(activity => (
-                  <View style={{
-                    flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
-                    width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
-                  }}>
-                    <View style={{}}>
-                      <Text style={{ fontSize: 18, paddingLeft: 5 }}>{activity.title}</Text>
-                      <Text style={{ paddingLeft: 5, opacity: 0.5 }}>{activity.description}</Text>
-                      <Text>{formatDate(activity.date)}</Text>
-                    </View>
-                    <View style={{ alignItems: "flex-end" }}>
-                      <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
-                      <View style={{ flexDirection: "row", alignSelf: 'flex-end', marginRight: 5 }}>
+            : null}
+          {activities.length > 0 && showFilter == false ?
+            <ScrollView style={{ marginTop: 10 }}>
+              {activities.map(activity => (
+                <ListItem bottomDivider key={activity.id} style={{ width: '100%' }}
+                  Component={TouchableScale}
+                  friction={95} //
+                  tension={100}
+                  onLongPress={() => confirmDelete(activity)}
+                  onPress={() => navigation.navigate("ManageActivityScreen", { activityId: activity.id })}
+                  activeScale={0.95} >
+                  <Avatar source={{ uri: activity.categoryImage }} />
+                  <ListItem.Content>
+                    <ListItem.Title>{activity.title}</ListItem.Title>
+                    <ListItem.Subtitle>{activity.description}</ListItem.Subtitle>
+                    <Text>{formatDate(activity.date)}</Text>
+                    {activity.cost != undefined ?
+                      <View style={{ flexDirection: "row", alignSelf: 'flex-end' }}>
                         <Text style={{ alignSelf: 'flex-end', fontWeight: "bold" }}>{activity.cost}</Text>
                         <Text> lei</Text>
                       </View>
+                      : null}
+                  </ListItem.Content>
+                  <ListItem.Chevron size={30} />
+                </ListItem>
+              ))}
+              {apiActivities.length > 0 ?
+                <View style={{ alignItems: "center" }}>
+                  {apiActivities.map(activity => (
+                    <View style={{
+                      flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
+                      width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
+                    }}>
+                      <View style={{}}>
+                        <Text style={{ fontSize: 18, paddingLeft: 5 }}>{activity.title}</Text>
+                        <Text style={{ paddingLeft: 5, opacity: 0.5 }}>{activity.description}</Text>
+                        <Text>{formatDate(activity.date)}</Text>
+                      </View>
+                      <View style={{ alignItems: "flex-end" }}>
+                        <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
+                        <View style={{ flexDirection: "row", alignSelf: 'flex-end', marginRight: 5 }}>
+                          <Text style={{ alignSelf: 'flex-end', fontWeight: "bold" }}>{activity.cost}</Text>
+                          <Text> lei</Text>
+                        </View>
+                      </View>
                     </View>
-                  </View>
-                ))}
-              </View>
-              : null}
-          </ScrollView>
-          : null}
-        {showFilter == true && showCategories == false && showTimePeriod == false ?
-          <View style={{ alignItems: "center" }}>
-            <Text h5 style={{ marginTop: 10, marginLeft: 10 }}>Alege filtru</Text>
-            <TouchableOpacity onPress={() => setShowCategories(!showCategories)}>
-              <View style={{
-                flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
-                width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
-              }}>
-                <View style={{ flexDirection: "row", alignItems: "center", }}>
-                  <Text style={{ fontSize: 18 }}>Categorie: </Text>
-                  <Text style={{ fontSize: 18, fontWeight: "bold" }}>{category != null ? category.data.name : null}</Text>
+                  ))}
                 </View>
-                <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowTimePeriod(!showTimePeriod)}>
-              <View style={{
-                flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
-                width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
-              }}>
-                <View style={{ flexDirection: "row", alignItems: "center", }}>
-                  <Text style={{ fontSize: 18 }}>Perioadă: </Text>
-                  <Text style={{ fontSize: 18, fontWeight: "bold" }}>{timePeriod != null ? timePeriod.name : null}</Text>
-                </View>
-                <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => deleteFilters()}>
-              <View style={{
-                flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "black",
-                width: windowWidth * 85 / 100, padding: 5, borderRadius: 20, marginTop: 15
-              }}>
-                <Text style={{ fontSize: 18, textAlign: "center", color: "white" }}>Șterge filtre</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-          : null}
-        {showFilter == true && showCategories == true ?
-          <View>
-            <View style={{ justifyContent: "center", alignItems: "center" }}>
+                : null}
+            </ScrollView>
+            : null}
+          {showFilter == true && showCategories == false && showTimePeriod == false ?
+            <View style={{ alignItems: "center" }}>
+              <Text h5 style={{ marginTop: 10, marginLeft: 10 }}>Alege filtru</Text>
               <TouchableOpacity onPress={() => setShowCategories(!showCategories)}>
                 <View style={{
-                  flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "white",
+                  flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
                   width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
                 }}>
-                  <Text style={{ fontSize: 16 }}>Înapoi</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", }}>
+                    <Text style={{ fontSize: 18 }}>Categorie: </Text>
+                    <Text style={{ fontSize: 18, fontWeight: "bold" }}>{category != null ? category.data.name : null}</Text>
+                  </View>
+                  <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
                 </View>
               </TouchableOpacity>
-              {categories.map(item => (
-                <TouchableOpacity onPress={() => selectCategory(item)}>
-                  <View style={{
-                    flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
-                    width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
-                  }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", }}>
-                      <Image source={{ uri: item.data.image }} style={{ width: 35, height: 35, marginRight: 10, marginLeft: 5 }}></Image>
-                      <Text style={{ fontSize: 18 }}>{item.data.name}</Text>
-                    </View>
-                    <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          : null}
-        {showFilter == true && showTimePeriod == true ?
-          <View>
-            <View style={{ justifyContent: "center", alignItems: "center" }}>
               <TouchableOpacity onPress={() => setShowTimePeriod(!showTimePeriod)}>
                 <View style={{
-                  flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "white",
+                  flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
                   width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
                 }}>
-                  <Text style={{ fontSize: 16 }}>Înapoi</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", }}>
+                    <Text style={{ fontSize: 18 }}>Perioadă: </Text>
+                    <Text style={{ fontSize: 18, fontWeight: "bold" }}>{timePeriod != null ? timePeriod.name : null}</Text>
+                  </View>
+                  <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
                 </View>
               </TouchableOpacity>
-              {timePeriodValues.map(item => (
-                <TouchableOpacity onPress={() => selectTimePeriod(item)}>
+              <TouchableOpacity onPress={() => deleteFilters()}>
+                <View style={{
+                  flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "black",
+                  width: windowWidth * 85 / 100, padding: 5, borderRadius: 20, marginTop: 15
+                }}>
+                  <Text style={{ fontSize: 18, textAlign: "center", color: "white" }}>Șterge filtre</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+            : null}
+          {showFilter == true && showCategories == true ?
+            <View>
+              <View style={{ justifyContent: "center", alignItems: "center" }}>
+                <TouchableOpacity onPress={() => setShowCategories(!showCategories)}>
                   <View style={{
-                    flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
+                    flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "white",
                     width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
                   }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", }}>
-                      <Text style={{ fontSize: 18 }}>{item.name}</Text>
-                    </View>
-                    <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
+                    <Text style={{ fontSize: 16 }}>Înapoi</Text>
                   </View>
                 </TouchableOpacity>
-              ))}
+                {categories.map(item => (
+                  <TouchableOpacity onPress={() => selectCategory(item)}>
+                    <View style={{
+                      flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
+                      width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
+                    }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", }}>
+                        <Image source={{ uri: item.data.image }} style={{ width: 35, height: 35, marginRight: 10, marginLeft: 5 }}></Image>
+                        <Text style={{ fontSize: 18 }}>{item.data.name}</Text>
+                      </View>
+                      <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
-          : null}
-
-      </View>
-
-      <ActionButton
-        buttonColor="black"
-        onPress={() => navigation.navigate("ManageActivityScreen", { carId: carInformations.car.id })}
-      />
+            : null}
+          {showFilter == true && showTimePeriod == true ?
+            <View>
+              <View style={{ justifyContent: "center", alignItems: "center" }}>
+                <TouchableOpacity onPress={() => setShowTimePeriod(!showTimePeriod)}>
+                  <View style={{
+                    flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "white",
+                    width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
+                  }}>
+                    <Text style={{ fontSize: 16 }}>Înapoi</Text>
+                  </View>
+                </TouchableOpacity>
+                {timePeriodValues.map(item => (
+                  <TouchableOpacity onPress={() => selectTimePeriod(item)}>
+                    <View style={{
+                      flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "white",
+                      width: windowWidth * 85 / 100, padding: 10, borderRadius: 20, marginTop: 10
+                    }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", }}>
+                        <Text style={{ fontSize: 18 }}>{item.name}</Text>
+                      </View>
+                      <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            : null}
+          {carInformations.brand == undefined && activities.length == 0 ?
+            <View style={{ alignItems: "center", justifyContent: "center", opacity: 0.2,
+             alignContent: "center", alignSelf: "center", flex: 1 }}>
+              <Icon name='car-multiple' color='black' size={150} />
+              <Text h5 style={{  }}>-nu există mașini adăugate-</Text>
+              <Text h3 style={{ marginTop: 20 }}>Adaugă o mașină</Text>
+              <Text h5 style={{  }}>poți adăuga o mașină de pe prima pagină</Text>
+            </View>
+            : null}
+        </View>
+      }
+       {carInformations.brand != undefined ?
+        <ActionButton
+          buttonColor="black"
+          onPress={() => navigation.navigate("ManageActivityScreen", { carId: carInformations.car.id })}
+        />
+        : null}
     </View>
-
   );
 };
 
