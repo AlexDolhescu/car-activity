@@ -155,6 +155,7 @@ const ManageModelScreen = ({ route, navigation }) => {
               onChangeText={name => setModelName(name)}
               placeholder="Dacia"
               value={modelName}
+              style={{color:"black"}}
             />
           </View>
           <View style={{
@@ -166,6 +167,7 @@ const ManageModelScreen = ({ route, navigation }) => {
               onChangeText={description => setDescriprion(description)}
               placeholder="date suplimentare"
               value={description}
+              style={{color:"black"}}
             />
           </View>
           {image != null ?

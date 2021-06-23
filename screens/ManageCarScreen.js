@@ -330,6 +330,7 @@ const ManageCarScreen = ({ route, navigation }) => {
                 autoCapitalize="characters"
                 placeholder="WVWZZZ1KZ8U40245"
                 value={car.vin}
+                style={{color:"black"}}
               />
             </View>
             <View style={{
@@ -343,6 +344,7 @@ const ManageCarScreen = ({ route, navigation }) => {
                 placeholder="120366"
                 keyboardType="numeric"
                 value={car.km}
+                style={{color:"black"}}
               />
             </View>
             <View style={{
@@ -355,6 +357,7 @@ const ManageCarScreen = ({ route, navigation }) => {
                 placeholder="IS 84 DOL"
                 autoCapitalize="characters"
                 value={car.licencePlate}
+                style={{color:"black"}}
               />
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
@@ -369,6 +372,7 @@ const ManageCarScreen = ({ route, navigation }) => {
                   placeholder="2021"
                   keyboardType="numeric"
                   value={car.fabricationYear}
+                  style={{color:"black"}}
                 />
               </View>
               <View style={{
@@ -382,6 +386,7 @@ const ManageCarScreen = ({ route, navigation }) => {
                   placeholder="1998 cm3"
                   keyboardType="numeric"
                   value={car.cilindricalCapacity}
+                  style={{color:"black"}}
                 />
               </View>
             </View>
@@ -397,6 +402,7 @@ const ManageCarScreen = ({ route, navigation }) => {
                   placeholder="77 kw"
                   keyboardType="numeric"
                   value={car.kw}
+                  style={{color:"black"}}
                 />
               </View>
               <View style={{
@@ -410,6 +416,7 @@ const ManageCarScreen = ({ route, navigation }) => {
                   placeholder="210 CP"
                   keyboardType="numeric"
                   value={car.hoursePower}
+                  style={{color:"black"}}
                 />
               </View>
             </View>
@@ -432,6 +439,7 @@ const ManageCarScreen = ({ route, navigation }) => {
                 maxLength={5}
                 keyboardType="numeric"
                 value={car.kmToService}
+                style={{color:"black"}}
               />
             </View>
             <View style={{
@@ -445,6 +453,7 @@ const ManageCarScreen = ({ route, navigation }) => {
                 keyboardType="numeric"
                 maxLength={3}
                 value={getNumberOfDays(car.daysToService)}
+                style={{color:"black"}}
               />
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>

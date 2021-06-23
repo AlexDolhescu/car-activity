@@ -131,6 +131,7 @@ const ManagePetrolScreen = ({ route, navigation }) => {
                             onChangeText={station => setPetrol({ ...petrol, station: station })}
                             placeholder="OMV"
                             value={petrol.station}
+                            style={{color:"black"}}
                         />
                     </View>
                     <TouchableOpacity onPress={showDatePicker}>
@@ -158,6 +159,7 @@ const ManagePetrolScreen = ({ route, navigation }) => {
                             keyboardType="numeric"
                             placeholder="200 lei"
                             value={petrol.cost}
+                            style={{color:"black"}}
                         />
                     </View>
                     <View style={{
@@ -169,6 +171,7 @@ const ManagePetrolScreen = ({ route, navigation }) => {
                             onChangeText={description => setPetrol({ ...petrol, description: description })}
                             placeholder="alte detalii"
                             value={petrol.description}
+                            style={{color:"black"}}
                         />
                     </View>
                     <Button style={{ width: 300, marginBottom: 20, marginTop: 30, marginRight: '2%', borderRadius: 50 }} mode="contained" color="black"

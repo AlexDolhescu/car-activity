@@ -265,7 +265,7 @@ const PetrolScreen = ({ navigation }) => {
                     }}>
                       <View style={{}}>
                         <Text style={{ fontSize: 18, paddingLeft: 5 }}>{petrol.station}</Text>
-                        <Text>{formatDate(petrol.date)}</Text>
+                        <Text>{formatDate(petrol.date.toDate())}</Text>
                       </View>
                       <View style={{ alignItems: "flex-end" }}>
                         <Icon size={25} name='chevron-right' color="black" style={{ marginRight: 5 }} />

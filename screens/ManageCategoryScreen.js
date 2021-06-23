@@ -154,6 +154,7 @@ const ManageCategoryScreen = ({ route, navigation }) => {
               onChangeText={name => setCategoryName(name)}
               placeholder="Reviezie"
               value={categoryName}
+              style={{color:"black"}}
             />
           </View>
           <View style={{
@@ -165,6 +166,7 @@ const ManageCategoryScreen = ({ route, navigation }) => {
               onChangeText={description => setDescriprion(description)}
               placeholder="date suplimentare"
               value={description}
+              style={{color:"black"}}
             />
           </View>
           {image != null ?

@@ -152,6 +152,7 @@ const ManageBrandScreen = ({ route, navigation }) => {
               onChangeText={name => setBrandName(name)}
               placeholder="Dacia"
               value={brandName}
+              style={{color:"black"}}
             />
           </View>
           <View style={{
@@ -163,6 +164,7 @@ const ManageBrandScreen = ({ route, navigation }) => {
               onChangeText={description => setDescriprion(description)}
               placeholder="date suplimentare"
               value={description}
+              style={{color:"black"}}
             />
           </View>
           {image != null ?

@@ -314,6 +314,7 @@ const ManageActivityScreen = ({ route, navigation }) => {
                 multiline
                 placeholder="Revizie ulei și filtre"
                 value={activity.title}
+                style={{color:"black"}}
               />
             </View>
             <View style={{
@@ -326,6 +327,7 @@ const ManageActivityScreen = ({ route, navigation }) => {
                 multiline
                 placeholder={"Am schimbat și filtrele.\nManopera 200 lei\nTrebuie schimbat și ..."}
                 value={activity.description}
+                style={{color:"black"}}
               />
             </View>
             <View style={{ width: '90%', marginTop: 10, flexDirection: "row", alignItems: "center", alignContent: "flex-start" }}>
@@ -396,6 +398,7 @@ const ManageActivityScreen = ({ route, navigation }) => {
                   keyboardType="numeric"
                   placeholder="120 356"
                   value={activity.km}
+                  style={{color:"black"}}
                 />
               </View>
               <View style={{ marginTop: 20, alignContent: 'center', alignItems: 'center', justifyContent: 'center' }}>
@@ -420,6 +423,7 @@ const ManageActivityScreen = ({ route, navigation }) => {
                 keyboardType="numeric"
                 placeholder="300 lei"
                 value={activity.cost}
+                style={{color:"black"}}
               />
             </View>
             <Button style={{ width: 300, marginBottom: 20, marginTop: 30, marginRight: '2%', borderRadius: 50 }} mode="contained" color="black"

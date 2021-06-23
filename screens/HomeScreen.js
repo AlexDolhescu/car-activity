@@ -264,7 +264,8 @@ const HomeScreen = ({ navigation }) => {
     return Moment(new Date(date)).diff(Moment(new Date()), 'days').toString();
   }
 
-  const _renderItem = ({ item, index }) => {
+  const _renderItem = ({ item, index }) => { item.brand.image
+    let uri = item.model.image != undefined ? item.model.image: item.brand.image;
     return (
       <View style={styles.slide}>
         <View style={styles.slideInnerContainer}>
@@ -273,7 +274,7 @@ const HomeScreen = ({ navigation }) => {
             borderRadius: 50, paddingLeft: 10, paddingRight: 10, color: "white", paddingBottom: 2,
           }}>{item.brand.name} {item.model != null ? item.model.name : null}</Text>
           <Image source={{
-            uri: item.brand.image,
+            uri: uri
           }}
             style={{
               resizeMode: "center", width: 100, height: 100, marginTop: 5

@@ -76,7 +76,7 @@ const MileageUpdateScreen = ({ route, navigation }) => {
                     keyboardType="numeric"
                     maxLength={6}
                     autoCapitalize="characters"
-                    style={{ width: '60%', marginTop: 10, textAlign:"center", fontSize: 24, fontWeight: "500" }}
+                    style={{ width: '60%', marginTop: 10, textAlign:"center", fontSize: 24, fontWeight: "500", color:"black" }}
                 />
                 <Button style={{ width: 300, marginBottom: 20, marginTop: 20, marginRight: '2%', borderRadius: 50 }} mode="contained" color="black"
                     onPress={confirmModal}
