@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Alert, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Alert, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
 import { Button } from 'react-native-paper';
 import { Text, Card, Image } from 'react-native-elements'
 import firestore from '@react-native-firebase/firestore';
@@ -11,6 +11,10 @@ import { TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Moment from 'moment';
 
+const wait = (timeout) => {
+  return new Promise(resolve => setTimeout(resolve, timeout));
+}
+
 const HomeScreen = ({ navigation }) => {
 
   const { user, logout } = useContext(AuthContext);
@@ -21,6 +25,7 @@ const HomeScreen = ({ navigation }) => {
   const [refreshCarousel, setRefreshCarousel] = useState(false);
   const [petrolInfo, setPetrolInfo] = useState({});
   const [isLoading, setIsLoaging] = useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
 
   React.useEffect(() => {
     void async function fetchData() {
@@ -34,6 +39,13 @@ const HomeScreen = ({ navigation }) => {
       return () => loadCars();
     }, [])
   );
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    loadCars();
+    wait(2000).then(() => setRefreshing(false));
+  }, []);
+
 
 
   const changeCar = async (index) => {
@@ -264,8 +276,9 @@ const HomeScreen = ({ navigation }) => {
     return Moment(new Date(date)).diff(Moment(new Date()), 'days').toString();
   }
 
-  const _renderItem = ({ item, index }) => { item.brand.image
-    let uri = item.model.image != undefined ? item.model.image: item.brand.image;
+  const _renderItem = ({ item, index }) => {
+    item.brand.image
+    let uri = item.model.image != undefined ? item.model.image : item.brand.image;
     return (
       <View style={styles.slide}>
         <View style={styles.slideInnerContainer}>
@@ -280,10 +293,12 @@ const HomeScreen = ({ navigation }) => {
               resizeMode: "center", width: 100, height: 100, marginTop: 5
             }} />
           <View>
-            <Text style={{
-              marginTop: 10, borderColor: index == activeIndex ? "green" : "black", borderRadius: 10,
-              borderWidth: 2, paddingLeft: 10, paddingRight: 5, paddingTop: 2
-            }}>{item.car.data().licencePlate}</Text>
+            <TouchableOpacity onPress={() => changeCar(index)}> 
+              <Text style={{
+                marginTop: 10, borderColor: index == activeIndex ? "green" : "black", borderRadius: 10,
+                borderWidth: 2, paddingLeft: 10, paddingRight: 5, paddingTop: 2
+              }}>{item.car.data().licencePlate}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -306,7 +321,14 @@ const HomeScreen = ({ navigation }) => {
             animating={isLoading} />
         </View>
         :
-        <ScrollView refresh={refreshCarousel}>
+        <ScrollView refresh={refreshCarousel}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+            />
+          }
+        >
           {carsToUser.length == 0 ?
             <SafeAreaView>
               <Image source={require('../assets/logo/logo.png')} style={{
